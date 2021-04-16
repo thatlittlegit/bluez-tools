@@ -232,7 +232,8 @@ int main(int argc, char *argv[])
 
 	mainloop = g_main_loop_new(NULL, FALSE);
 
-	BztManager *manager = bzt_manager_new();
+	BztManager *manager = bzt_manager_new(NULL, &error);
+	exit_if_error(error);
         
         AgentManager *agent_manager = agent_manager_new();
 

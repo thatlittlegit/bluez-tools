@@ -10,7 +10,11 @@ struct _BztManager
     GDBusProxy *proxy;
 };
 
-G_DEFINE_TYPE(BztManager, bzt_manager, G_TYPE_OBJECT)
+static void bzt_manager_initable_iface(GInitableIface* iface);
+static gboolean bzt_manager_real_init(GInitable *initable, GCancellable *cancel, GError **error);
+
+G_DEFINE_TYPE_WITH_CODE(BztManager, bzt_manager, G_TYPE_OBJECT,
+    G_IMPLEMENT_INTERFACE(G_TYPE_INITABLE, bzt_manager_initable_iface))
 struct dummy;
 
 static void bzt_manager_dispose (GObject *gobject)
@@ -52,25 +56,35 @@ static void bzt_manager_finalize (GObject *gobject)
 
 static void bzt_manager_class_init(BztManagerClass *klass)
 {
+    GObjectClass *object_class = G_OBJECT_CLASS(klass);
+    object_class->dispose = bzt_manager_dispose;
+    object_class->finalize = bzt_manager_finalize;
+}
+
+static void bzt_manager_initable_iface(GInitableIface* iface)
+{
+    iface->init = bzt_manager_real_init;
 }
 
 static void bzt_manager_init(BztManager *self)
 {
-    GError *error = NULL;
-
-    g_assert(system_conn != NULL);
-    self->proxy = g_dbus_proxy_new_sync(system_conn, G_DBUS_PROXY_FLAGS_NONE, NULL, BLUEZ_DBUS_SERVICE_NAME, MANAGER_DBUS_PATH, MANAGER_DBUS_INTERFACE, NULL, &error);
-
-    if (self->proxy == NULL)
-    {
-        g_critical("%s", error->message);
-    }
-    g_assert(error == NULL);
 }
 
-BztManager *bzt_manager_new()
+static gboolean bzt_manager_real_init(GInitable *initable, GCancellable *cancel, GError **error)
 {
-    return g_object_new(BZT_TYPE_MANAGER, NULL);
+    g_assert(system_conn != NULL);
+    BztManager *self = BZT_MANAGER(initable);
+
+    self->proxy = g_dbus_proxy_new_sync(system_conn, G_DBUS_PROXY_FLAGS_NONE, NULL,
+					BLUEZ_DBUS_SERVICE_NAME, MANAGER_DBUS_PATH,
+					MANAGER_DBUS_INTERFACE, cancel, error);
+
+    return self->proxy != NULL;
+}
+
+BztManager *bzt_manager_new(GCancellable *cancel, GError **error)
+{
+    return g_initable_new(BZT_TYPE_MANAGER, cancel, error, NULL);
 }
 
 GVariant *bzt_manager_get_managed_objects(BztManager *self, GError **error)

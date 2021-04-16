@@ -153,7 +153,8 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    BztManager *manager = bzt_manager_new();
+    BztManager *manager = bzt_manager_new(NULL, &error);
+    exit_if_error(error);
 
     if (list_arg)
     {

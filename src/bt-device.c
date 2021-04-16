@@ -506,7 +506,8 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    BztManager *manager = bzt_manager_new();
+    BztManager *manager = bzt_manager_new(NULL, &error);
+    exit_if_error(error);
     Adapter *adapter = find_adapter(adapter_arg, &error);
     exit_if_error(error);
 

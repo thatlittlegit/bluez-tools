@@ -157,7 +157,9 @@ Adapter *find_adapter(const gchar *name, GError **error)
     gchar *adapter_path = NULL;
     Adapter *adapter = NULL;
 
-    BztManager *manager = bzt_manager_new();
+    BztManager *manager = bzt_manager_new(NULL, error);
+    if (manager == NULL)
+	return NULL;
 
     // Try to find by id
     adapter_path = (gchar *) bzt_manager_find_adapter(manager, name, error);
@@ -209,7 +211,9 @@ Device *find_device(Adapter *adapter, const gchar *name, GError **error)
 
     Device *device = NULL;
     
-    BztManager *manager = bzt_manager_new();
+    BztManager *manager = bzt_manager_new(NULL, error);
+    if (manager == NULL)
+	return NULL;
     
     GVariant *objects = bzt_manager_get_managed_objects(manager, error);
     

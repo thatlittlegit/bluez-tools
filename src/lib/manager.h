@@ -2,6 +2,8 @@
 #define	MANAGER_H
 
 #include <glib-object.h>
+#include <glib.h>
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
@@ -13,7 +15,7 @@ struct dummy;
 #define MANAGER_DBUS_PATH       "/"
 #define MANAGER_DBUS_INTERFACE  "org.freedesktop.DBus.ObjectManager"
 
-BztManager *bzt_manager_new();
+BztManager *bzt_manager_new(GCancellable *cancel, GError **error);
     
 GVariant *bzt_manager_get_managed_objects(BztManager *self, GError **error);
 const gchar *bzt_manager_find_adapter(BztManager *self, const gchar *pattern, GError **error);
