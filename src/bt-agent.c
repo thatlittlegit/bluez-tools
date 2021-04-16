@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 
 	mainloop = g_main_loop_new(NULL, FALSE);
 
-	Manager *manager = g_object_new(MANAGER_TYPE, NULL);
+	BztManager *manager = bzt_manager_new();
         
         AgentManager *agent_manager = agent_manager_new();
 

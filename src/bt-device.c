@@ -506,13 +506,13 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    Manager *manager = manager_new();
+    BztManager *manager = bzt_manager_new();
     Adapter *adapter = find_adapter(adapter_arg, &error);
     exit_if_error(error);
 
     if (list_arg)
     {
-        const gchar **devices_list = manager_get_devices(manager, adapter_get_dbus_object_path(adapter));
+        const gchar **devices_list = bzt_manager_get_devices(manager, adapter_get_dbus_object_path(adapter));
 
         if (devices_list == NULL)
         {

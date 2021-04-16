@@ -157,10 +157,10 @@ Adapter *find_adapter(const gchar *name, GError **error)
     gchar *adapter_path = NULL;
     Adapter *adapter = NULL;
 
-    Manager *manager = g_object_new(MANAGER_TYPE, NULL);
+    BztManager *manager = bzt_manager_new();
 
     // Try to find by id
-    adapter_path = (gchar *) manager_find_adapter(manager, name, error);
+    adapter_path = (gchar *) bzt_manager_find_adapter(manager, name, error);
 
     // Found
     if (adapter_path)
@@ -171,7 +171,7 @@ Adapter *find_adapter(const gchar *name, GError **error)
     else
     {
         // Try to find by name
-        GPtrArray *adapters_list = manager_get_adapters(manager);
+        GPtrArray *adapters_list = bzt_manager_get_adapters(manager);
         g_assert(adapters_list != NULL);
         for (int i = 0; i < adapters_list->len; i++)
         {
@@ -209,9 +209,9 @@ Device *find_device(Adapter *adapter, const gchar *name, GError **error)
 
     Device *device = NULL;
     
-    Manager *manager = g_object_new(MANAGER_TYPE, NULL);
+    BztManager *manager = bzt_manager_new();
     
-    GVariant *objects = manager_get_managed_objects(manager, error);
+    GVariant *objects = bzt_manager_get_managed_objects(manager, error);
     
     g_clear_object(&manager);
     

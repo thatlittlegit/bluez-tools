@@ -153,11 +153,11 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    Manager *manager = g_object_new(MANAGER_TYPE, NULL);
+    BztManager *manager = bzt_manager_new();
 
     if (list_arg)
     {
-        const GPtrArray *adapters_list = manager_get_adapters(manager);
+        const GPtrArray *adapters_list = bzt_manager_get_adapters(manager);
         g_assert(adapters_list != NULL);
 
         if (adapters_list->len == 0)

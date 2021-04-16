@@ -3,16 +3,19 @@
 #include "dbus-common.h"
 #include "manager.h"
 
-struct _ManagerPrivate
+struct _BztManager
 {
+    GObject parent_instance;
+
     GDBusProxy *proxy;
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE(Manager, manager, G_TYPE_OBJECT)
+G_DEFINE_TYPE(BztManager, bzt_manager, G_TYPE_OBJECT)
+struct dummy;
 
-static void manager_dispose (GObject *gobject)
+static void bzt_manager_dispose (GObject *gobject)
 {
-    Manager *self = MANAGER (gobject);
+    BztManager *self = BZT_MANAGER (gobject);
 
     /* In dispose(), you are supposed to free all types referenced from this
      * object which might themselves hold a reference to self. Generally,
@@ -25,58 +28,57 @@ static void manager_dispose (GObject *gobject)
      * NULL; g_clear_object() does this for us, atomically.
      */
     // g_clear_object (&self->priv->an_object);
-    g_clear_object (&self->priv->proxy);
+    g_clear_object (&self->proxy);
 
 
     /* Always chain up to the parent class; there is no need to check if
      * the parent class implements the dispose() virtual function: it is
      * always guaranteed to do so
      */
-    G_OBJECT_CLASS (manager_parent_class)->dispose (gobject);
+    G_OBJECT_CLASS (bzt_manager_parent_class)->dispose (gobject);
 }
 
-static void manager_finalize (GObject *gobject)
+static void bzt_manager_finalize (GObject *gobject)
 {
-    Manager *self = MANAGER(gobject);
+    BztManager *self = BZT_MANAGER(gobject);
 
     // g_free(self->priv->a_string);
 
     /* Always chain up to the parent class; as with dispose(), finalize()
      * is guaranteed to exist on the parent's class virtual function table
      */
-    G_OBJECT_CLASS (manager_parent_class)->finalize (gobject);
+    G_OBJECT_CLASS (bzt_manager_parent_class)->finalize (gobject);
 }
 
-static void manager_class_init(ManagerClass *klass)
+static void bzt_manager_class_init(BztManagerClass *klass)
 {
 }
 
-static void manager_init(Manager *self)
+static void bzt_manager_init(BztManager *self)
 {
-    self->priv = manager_get_instance_private(self);
     GError *error = NULL;
 
     g_assert(system_conn != NULL);
-    self->priv->proxy = g_dbus_proxy_new_sync(system_conn, G_DBUS_PROXY_FLAGS_NONE, NULL, BLUEZ_DBUS_SERVICE_NAME, MANAGER_DBUS_PATH, MANAGER_DBUS_INTERFACE, NULL, &error);
+    self->proxy = g_dbus_proxy_new_sync(system_conn, G_DBUS_PROXY_FLAGS_NONE, NULL, BLUEZ_DBUS_SERVICE_NAME, MANAGER_DBUS_PATH, MANAGER_DBUS_INTERFACE, NULL, &error);
 
-    if (self->priv->proxy == NULL)
+    if (self->proxy == NULL)
     {
         g_critical("%s", error->message);
     }
     g_assert(error == NULL);
 }
 
-Manager *manager_new()
+BztManager *bzt_manager_new()
 {
-    return g_object_new(MANAGER_TYPE, NULL);
+    return g_object_new(BZT_TYPE_MANAGER, NULL);
 }
 
-GVariant *manager_get_managed_objects(Manager *self, GError **error)
+GVariant *bzt_manager_get_managed_objects(BztManager *self, GError **error)
 {
-    g_assert(MANAGER_IS(self));
+    g_assert(BZT_IS_MANAGER(self));
 
     GVariant *retVal = NULL;
-    retVal = g_dbus_proxy_call_sync(self->priv->proxy, "GetManagedObjects", NULL, G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
+    retVal = g_dbus_proxy_call_sync(self->proxy, "GetManagedObjects", NULL, G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
 
     if (retVal != NULL)
         retVal = g_variant_get_child_value(retVal, 0);
@@ -84,12 +86,12 @@ GVariant *manager_get_managed_objects(Manager *self, GError **error)
     return retVal;
 }
 
-const gchar *manager_find_adapter(Manager *self, const gchar *pattern, GError **error)
+const gchar *bzt_manager_find_adapter(BztManager *self, const gchar *pattern, GError **error)
 {
-    g_assert(MANAGER_IS(self));
+    g_assert(BZT_IS_MANAGER(self));
 
     GVariant *objects = NULL;
-    objects = manager_get_managed_objects(self, error);
+    objects = bzt_manager_get_managed_objects(self, error);
     if (objects == NULL)
         return NULL;
 
@@ -171,13 +173,13 @@ const gchar *manager_find_adapter(Manager *self, const gchar *pattern, GError **
     }
 }
 
-GPtrArray *manager_get_adapters(Manager *self)
+GPtrArray *bzt_manager_get_adapters(BztManager *self)
 {
-    g_assert(MANAGER_IS(self));
+    g_assert(BZT_IS_MANAGER(self));
 
     GVariant *objects = NULL;
     GError *error = NULL;
-    objects = manager_get_managed_objects(self, &error);
+    objects = bzt_manager_get_managed_objects(self, &error);
     if (objects == NULL)
     {
         g_critical("%s", error->message);
@@ -214,13 +216,13 @@ GPtrArray *manager_get_adapters(Manager *self)
     return adapter_array;
 }
 
-const gchar **manager_get_devices(Manager *self, const gchar *adapter_pattern)
+const gchar **bzt_manager_get_devices(BztManager *self, const gchar *adapter_pattern)
 {
-    g_assert(MANAGER_IS(self));
+    g_assert(BZT_IS_MANAGER(self));
 
     GVariant *objects = NULL;
     GError *error = NULL;
-    objects = manager_get_managed_objects(self, &error);
+    objects = bzt_manager_get_managed_objects(self, &error);
     if (objects == NULL)
     {
         g_critical("%s", error->message);

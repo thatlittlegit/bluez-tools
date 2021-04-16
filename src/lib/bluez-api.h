@@ -1,6 +1,8 @@
 #ifndef BLUEZ_API_H
 #define	BLUEZ_API_H
 
+//#error "nuh-uh!"
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
