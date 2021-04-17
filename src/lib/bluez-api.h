@@ -15,13 +15,13 @@ extern "C" {
 #include "manager.h"
 #include "obex_agent.h"
 
-#include <bluez/adapter.h>
+#include "adapter.h"
 #include <bluez/agent_manager.h>
 #include <bluez/alert.h>
 #include <bluez/alert_agent.h>
 #include <bluez/cycling_speed.h>
 #include <bluez/cycling_speed_manager.h>
-#include <bluez/device.h>
+#include "device.h"
 #include <bluez/health_channel.h>
 #include <bluez/health_device.h>
 #include <bluez/health_manager.h>

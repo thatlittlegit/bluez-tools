@@ -4,13 +4,11 @@ LDADD = $(GLIB_LIBS) $(GIO_LIBS)
 noinst_LIBRARIES = libbluez-tools-api.a
 
 nodist_libbluez_tools_api_a_SOURCES = \
-	adapter.c adapter.h \
 	agent_manager.c agent_manager.h \
 	alert.c alert.h \
 	alert_agent.c alert_agent.h \
 	cycling_speed.c cycling_speed.h \
 	cycling_speed_manager.c cycling_speed_manager.h \
-	device.c device.h \
 	health_channel.c health_channel.h \
 	health_device.c health_device.h \
 	health_manager.c health_manager.h \
@@ -43,11 +41,10 @@ $(nodist_libbluez_tools_api_a_SOURCES): bindings.stamp
 	mv "../out/$@" "$@"
 	touch "$@"
 
-libbluez_tools_api_a_text = adapter-api.txt \
+libbluez_tools_api_a_text = \
 	agent-api.txt \
 	alert-api.txt \
 	cyclingspeed-api.txt \
-	device-api.txt \
 	health-api.txt \
 	heartrate-api.txt \
 	media-api.txt \

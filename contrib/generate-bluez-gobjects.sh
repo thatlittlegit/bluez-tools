@@ -6,11 +6,11 @@ set -e
 API_VERSION=5.20-fixed
 
 # adapter-api.txt
-echo "adapter-api.txt"
-echo "Generating adapter header"
-./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/adapter-api.txt > out/adapter.h
-echo "Generating adapter source"
-./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/adapter-api.txt > out/adapter.c
+# echo "adapter-api.txt"
+# echo "Generating adapter header"
+# ./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/adapter-api.txt > out/adapter.h
+# echo "Generating adapter source"
+# ./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/adapter-api.txt > out/adapter
 
 # agent-api.txt
 echo "agent-api.txt"
@@ -54,11 +54,11 @@ echo "Generating cycling speed source"
 # ./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/cyclingspeed-api.txt 3 > out/cycling_speed_watcher.c
 
 # device-api.txt
-echo "device-api.txt"
-echo "Generating device header"
-./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/device-api.txt > out/device.h
-echo "Generating device source"
-./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/device-api.txt > out/device.c
+# echo "device-api.txt"
+# echo "Generating device header"
+# ./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/device-api.txt > out/device.h
+# echo "Generating device source"
+# ./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/device-api.txt > out/device.c
 
 # health-api.txt
 echo "health-api.txt"
