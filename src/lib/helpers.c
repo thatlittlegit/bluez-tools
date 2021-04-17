@@ -152,10 +152,10 @@ int xtoi(const gchar *str)
     return i;
 }
 
-Adapter *find_adapter(const gchar *name, GError **error)
+BztAdapter *find_adapter(const gchar *name, GError **error)
 {
     gchar *adapter_path = NULL;
-    Adapter *adapter = NULL;
+    BztAdapter *adapter = NULL;
 
     BztManager *manager = bzt_manager_new(NULL, error);
     if (manager == NULL)
@@ -168,7 +168,7 @@ Adapter *find_adapter(const gchar *name, GError **error)
     if (adapter_path)
     {
         // adapter = g_object_new(ADAPTER_TYPE, "DBusObjectPath", adapter_path, NULL);
-        adapter = adapter_new(adapter_path);
+        adapter = bzt_adapter_new(adapter_path);
     }
     else
     {
@@ -179,10 +179,10 @@ Adapter *find_adapter(const gchar *name, GError **error)
         {
             adapter_path = g_ptr_array_index(adapters_list, i);
             // adapter = g_object_new(ADAPTER_TYPE, "DBusObjectPath", adapter_path, NULL);
-            adapter = adapter_new(adapter_path);
+            adapter = bzt_adapter_new(adapter_path);
             adapter_path = NULL;
 
-            if (g_strcmp0(name, adapter_get_name(adapter, error)) == 0)
+            if (g_strcmp0(name, bzt_adapter_get_name(adapter, error)) == 0)
             {
                 if (*error)
                 {
@@ -204,12 +204,12 @@ Adapter *find_adapter(const gchar *name, GError **error)
     return adapter;
 }
 
-Device *find_device(Adapter *adapter, const gchar *name, GError **error)
+BztDevice *find_device(BztAdapter *adapter, const gchar *name, GError **error)
 {
-    g_assert(adapter != NULL && ADAPTER_IS(adapter));
+    g_assert(adapter != NULL && BZT_IS_ADAPTER(adapter));
     g_assert(name != NULL && strlen(name) > 0);
 
-    Device *device = NULL;
+    BztDevice *device = NULL;
     
     BztManager *manager = bzt_manager_new(NULL, error);
     if (manager == NULL)
@@ -233,12 +233,12 @@ Device *find_device(Adapter *adapter, const gchar *name, GError **error)
     {
         GVariant *properties = NULL;
         
-        if(g_variant_lookup(ifaces_and_properties, DEVICE_DBUS_INTERFACE, "@a{sv}", &properties))
+        if(g_variant_lookup(ifaces_and_properties, BZT_DEVICE_DBUS_INTERFACE, "@a{sv}", &properties))
         {
             gchar *adapter_path = NULL;
             if(g_variant_lookup(properties, "Adapter", "o", &adapter_path))
             {
-                if(g_strcmp0(adapter_path, adapter_get_dbus_object_path(adapter)) == 0)
+                if(g_strcmp0(adapter_path, bzt_adapter_get_dbus_object_path(adapter)) == 0)
                 {
                     // Now check if this is the device we are looking for.
                     
@@ -249,7 +249,7 @@ Device *find_device(Adapter *adapter, const gchar *name, GError **error)
                     {
                         if(name && address && g_ascii_strcasecmp(address, name) == 0)
                         {
-                            device = device_new(object_path);
+                            device = bzt_device_new(object_path);
                         }
                         g_free(address);
                     }
@@ -263,7 +263,7 @@ Device *find_device(Adapter *adapter, const gchar *name, GError **error)
                         g_variant_lookup(properties, "Alias", "s", &device_alias);
                         
                         if (g_strcmp0(name, device_name) == 0 || g_strcmp0(name, device_alias) == 0) {
-                            device = device_new(object_path);
+                            device = bzt_device_new(object_path);
                         }
                         
                         g_free(device_alias);

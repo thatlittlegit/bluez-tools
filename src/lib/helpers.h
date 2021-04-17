@@ -34,8 +34,8 @@
 gboolean intf_supported(const gchar *dbus_service_name, const gchar *dbus_object_path, const gchar *intf_name);
 
 /* BlueZ helpers */
-Adapter *find_adapter(const gchar *name, GError **error);
-Device *find_device(Adapter *adapter, const gchar *name, GError **error);
+BztAdapter *find_adapter(const gchar *name, GError **error);
+BztDevice *find_device(BztAdapter *adapter, const gchar *name, GError **error);
 
 /* Others helpers */
 #define exit_if_error(error) G_STMT_START{ \

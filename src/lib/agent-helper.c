@@ -52,11 +52,11 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
     if (g_strcmp0(method_name, "AuthorizeService") == 0)
     {
         GError *error = NULL;
-        Device *device_obj = device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        BztDevice *device_obj = bzt_device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
         const char *uuid = g_variant_get_string(g_variant_get_child_value(parameters, 1), NULL);
 
         if (_interactive)
-          g_print("Device: %s (%s) for UUID %s\n", device_get_alias(device_obj, &error), device_get_address(device_obj, &error), uuid);
+          g_print("Device: %s (%s) for UUID %s\n", bzt_device_get_alias(device_obj, &error), bzt_device_get_address(device_obj, &error), uuid);
 
         if (error)
         {
@@ -66,7 +66,7 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
             return;
         }
 
-        if (device_get_paired (device_obj, &error))
+        if (bzt_device_get_paired (device_obj, &error))
         {
             g_dbus_method_invocation_return_value(invocation, NULL);
         }
@@ -90,11 +90,11 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
     else if (g_strcmp0(method_name, "DisplayPasskey") == 0)
     {
         GError *error = NULL;
-        Device *device_obj = device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
-        const gchar *pin = _find_device_pin(device_get_dbus_object_path(device_obj));
+        BztDevice *device_obj = bzt_device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        const gchar *pin = _find_device_pin(bzt_device_get_dbus_object_path(device_obj));
 
         if (_interactive)
-            g_print("Device: %s (%s)\n", device_get_alias(device_obj, &error), device_get_address(device_obj, &error));
+            g_print("Device: %s (%s)\n", bzt_device_get_alias(device_obj, &error), bzt_device_get_address(device_obj, &error));
 
         if (error)
         {
@@ -122,12 +122,12 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
     else if (g_strcmp0(method_name, "DisplayPinCode") == 0)
     {
         GError *error = NULL;
-        Device *device_obj = device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
-        const gchar *pin = _find_device_pin(device_get_dbus_object_path(device_obj));
+        BztDevice *device_obj = bzt_device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        const gchar *pin = _find_device_pin(bzt_device_get_dbus_object_path(device_obj));
         const gchar *pincode = g_variant_get_string(g_variant_get_child_value(parameters, 1), NULL);
 
         if (_interactive)
-            g_print("Device: %s (%s)\n", device_get_alias(device_obj, &error), device_get_address(device_obj, &error));
+            g_print("Device: %s (%s)\n", bzt_device_get_alias(device_obj, &error), bzt_device_get_address(device_obj, &error));
 
         if (error)
         {
@@ -184,10 +184,10 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
     else if (g_strcmp0(method_name, "RequestAuthorization") == 0)
     {
         GError *error = NULL;
-        Device *device_obj = device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        BztDevice *device_obj = bzt_device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
 
         if (_interactive)
-            g_print("Device: %s (%s)\n", device_get_alias(device_obj, &error), device_get_address(device_obj, &error));
+            g_print("Device: %s (%s)\n", bzt_device_get_alias(device_obj, &error), bzt_device_get_address(device_obj, &error));
 
         if(error)
         {
@@ -216,12 +216,12 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
     else if (g_strcmp0(method_name, "RequestConfirmation") == 0)
     {
         GError *error = NULL;
-        Device *device_obj = device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        BztDevice *device_obj = bzt_device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
         guint32 passkey = g_variant_get_uint32(g_variant_get_child_value(parameters, 1));
-        const gchar *pin = _find_device_pin(device_get_dbus_object_path(device_obj));
+        const gchar *pin = _find_device_pin(bzt_device_get_dbus_object_path(device_obj));
 
         if (_interactive)
-            g_print("Device: %s (%s)\n", device_get_alias(device_obj, &error), device_get_address(device_obj, &error));
+            g_print("Device: %s (%s)\n", bzt_device_get_alias(device_obj, &error), bzt_device_get_address(device_obj, &error));
 
         if(error)
         {
@@ -267,13 +267,13 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
     else if (g_strcmp0(method_name, "RequestPasskey") == 0)
     {
         GError *error = NULL;
-        Device *device_obj = device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
-        const gchar *pin = _find_device_pin(device_get_dbus_object_path(device_obj));
+        BztDevice *device_obj = bzt_device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        const gchar *pin = _find_device_pin(bzt_device_get_dbus_object_path(device_obj));
         guint32 ret = 0;
         gboolean invoke = FALSE;
 
         if (_interactive)
-            g_print("Device: %s (%s)\n", device_get_alias(device_obj, &error), device_get_address(device_obj, &error));
+            g_print("Device: %s (%s)\n", bzt_device_get_alias(device_obj, &error), bzt_device_get_address(device_obj, &error));
 
         if(error)
         {
@@ -312,13 +312,13 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
     else if (g_strcmp0(method_name, "RequestPinCode") == 0)
     {
         GError *error = NULL;
-        Device *device_obj = device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
-        const gchar *pin = _find_device_pin(device_get_dbus_object_path(device_obj));
+        BztDevice *device_obj = bzt_device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        const gchar *pin = _find_device_pin(bzt_device_get_dbus_object_path(device_obj));
         gchar *ret = NULL;
         gboolean invoke = FALSE;
 
         if (_interactive)
-            g_print("Device: %s (%s)\n", device_get_alias(device_obj, &error), device_get_address(device_obj, &error));
+            g_print("Device: %s (%s)\n", bzt_device_get_alias(device_obj, &error), bzt_device_get_address(device_obj, &error));
 
         if(error)
         {
@@ -369,9 +369,9 @@ static const gchar *_find_device_pin(const gchar *device_path)
     if (_pin_hash_table)
     {
         GError *error = NULL;
-        Device *device = device_new(device_path);
-        const gchar *pin_by_addr = g_hash_table_lookup(_pin_hash_table, device_get_address(device, &error));
-        const gchar *pin_by_alias = g_hash_table_lookup(_pin_hash_table, device_get_alias(device, &error));
+        BztDevice *device = bzt_device_new(device_path);
+        const gchar *pin_by_addr = g_hash_table_lookup(_pin_hash_table, bzt_device_get_address(device, &error));
+        const gchar *pin_by_alias = g_hash_table_lookup(_pin_hash_table, bzt_device_get_alias(device, &error));
         if(error)
         {
             g_critical("Failed to get remote device's MAC address: %s", error->message);

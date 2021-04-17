@@ -206,16 +206,16 @@ static void _obex_agent_method_call_func(GDBusConnection *connection, const gcha
     if (g_strcmp0(method_name, "AuthorizePush") == 0)
     {
         const gchar *transfer = g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL);
-        if (intf_supported(OBEX_TRANSFER_DBUS_SERVICE, transfer, OBEX_TRANSFER_DBUS_INTERFACE))
+        if (intf_supported(BZT_OBEX_TRANSFER_DBUS_SERVICE, transfer, BZT_OBEX_TRANSFER_DBUS_INTERFACE))
         {
-            ObexTransfer *transfer_t = obex_transfer_new(transfer);
+            BztObexTransfer *transfer_t = bzt_obex_transfer_new(transfer);
             g_print("[Transfer Request]\n");
-            g_print("  Name: %s\n", obex_transfer_get_name(transfer_t, NULL));
-            g_print("  Size: %" G_GINT64_FORMAT " bytes\n", obex_transfer_get_size(transfer_t, NULL));
+            g_print("  Name: %s\n", bzt_obex_transfer_get_name(transfer_t, NULL));
+            g_print("  Size: %" G_GINT64_FORMAT " bytes\n", bzt_obex_transfer_get_size(transfer_t, NULL));
             // Filename seems to be always NULL
             // g_print("  Filename: %s\n", obex_transfer_get_filename(transfer_t, NULL));
-            const gchar *filename = obex_transfer_get_name(transfer_t, NULL);
-            const guint64 size = obex_transfer_get_size(transfer_t, NULL);
+            const gchar *filename = bzt_obex_transfer_get_name(transfer_t, NULL);
+            const guint64 size = bzt_obex_transfer_get_size(transfer_t, NULL);
             g_object_unref(transfer_t);
 
             gchar yn[4] = {0,};

@@ -53,7 +53,7 @@ static void _manager_device_found(GDBusConnection *connection, const gchar *send
 
     GVariant *interfaces_and_properties = g_variant_get_child_value(parameters, 1);
     GVariant *properties = NULL;
-    if (g_variant_lookup(interfaces_and_properties, DEVICE_DBUS_INTERFACE, "@a{sv}", &properties))
+    if (g_variant_lookup(interfaces_and_properties, BZT_DEVICE_DBUS_INTERFACE, "@a{sv}", &properties))
     {
         g_print("[%s]\n", g_variant_get_string(g_variant_lookup_value(properties, "Address", NULL), NULL));
         g_print("  Name: %s\n", g_variant_lookup_value(properties, "Name", NULL) != NULL ? g_variant_get_string(g_variant_lookup_value(properties, "Name", NULL), NULL) : NULL);
@@ -171,30 +171,30 @@ int main(int argc, char *argv[])
         for (int i = 0; i < adapters_list->len; i++)
         {
             const gchar *adapter_path = g_ptr_array_index(adapters_list, i);
-            Adapter *adapter = adapter_new(adapter_path);
-            g_print("%s (%s)\n", adapter_get_name(adapter, &error), adapter_get_address(adapter, &error));
+            BztAdapter *adapter = bzt_adapter_new(adapter_path);
+            g_print("%s (%s)\n", bzt_adapter_get_name(adapter, &error), bzt_adapter_get_address(adapter, &error));
             g_object_unref(adapter);
         }
     }
     else if (info_arg)
     {
-        Adapter *adapter = find_adapter(adapter_arg, &error);
+        BztAdapter *adapter = find_adapter(adapter_arg, &error);
         exit_if_error(error);
 
-        gchar *adapter_intf = g_path_get_basename(adapter_get_dbus_object_path(adapter));
+        gchar *adapter_intf = g_path_get_basename(bzt_adapter_get_dbus_object_path(adapter));
         g_print("[%s]\n", adapter_intf);
-        g_print("  Name: %s\n", adapter_get_name(adapter, &error));
-        g_print("  Address: %s\n", adapter_get_address(adapter, &error));
-        g_print("  Alias: %s [rw]\n", adapter_get_alias(adapter, &error));
-        g_print("  Class: 0x%x\n", adapter_get_class(adapter, &error));
-        g_print("  Discoverable: %d [rw]\n", adapter_get_discoverable(adapter, &error));
-        g_print("  DiscoverableTimeout: %d [rw]\n", adapter_get_discoverable_timeout(adapter, &error));
-        g_print("  Discovering: %d\n", adapter_get_discovering(adapter, &error));
-        g_print("  Pairable: %d [rw]\n", adapter_get_pairable(adapter, &error));
-        g_print("  PairableTimeout: %d [rw]\n", adapter_get_pairable_timeout(adapter, &error));
-        g_print("  Powered: %d [rw]\n", adapter_get_powered(adapter, &error));
+        g_print("  Name: %s\n", bzt_adapter_get_name(adapter, &error));
+        g_print("  Address: %s\n", bzt_adapter_get_address(adapter, &error));
+        g_print("  Alias: %s [rw]\n", bzt_adapter_get_alias(adapter, &error));
+        g_print("  Class: 0x%x\n", bzt_adapter_get_class(adapter, &error));
+        g_print("  Discoverable: %d [rw]\n", bzt_adapter_get_discoverable(adapter, &error));
+        g_print("  DiscoverableTimeout: %d [rw]\n", bzt_adapter_get_discoverable_timeout(adapter, &error));
+        g_print("  Discovering: %d\n", bzt_adapter_get_discovering(adapter, &error));
+        g_print("  Pairable: %d [rw]\n", bzt_adapter_get_pairable(adapter, &error));
+        g_print("  PairableTimeout: %d [rw]\n", bzt_adapter_get_pairable_timeout(adapter, &error));
+        g_print("  Powered: %d [rw]\n", bzt_adapter_get_powered(adapter, &error));
         g_print("  UUIDs: [");
-        const gchar **uuids = adapter_get_uuids(adapter, &error);
+        const gchar **uuids = bzt_adapter_get_uuids(adapter, &error);
         for (int j = 0; uuids[j] != NULL; j++)
         {
             if (j > 0) g_print(", ");
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
     }
     else if (discover_arg)
     {
-        Adapter *adapter = find_adapter(adapter_arg, &error);
+        BztAdapter *adapter = find_adapter(adapter_arg, &error);
         exit_if_error(error);
 
         // To store pairs MAC => Name
@@ -216,13 +216,13 @@ int main(int argc, char *argv[])
         // Mainloop
         GMainLoop *mainloop = g_main_loop_new(NULL, FALSE);
 
-        guint object_sig_sub_id = g_dbus_connection_signal_subscribe(system_conn, "org.bluez", "org.freedesktop.DBus.ObjectManager", "InterfacesAdded", NULL, NULL, G_DBUS_SIGNAL_FLAGS_NONE, _manager_device_found, (gpointer) adapter_get_dbus_object_path(adapter), NULL);
+        guint object_sig_sub_id = g_dbus_connection_signal_subscribe(system_conn, "org.bluez", "org.freedesktop.DBus.ObjectManager", "InterfacesAdded", NULL, NULL, G_DBUS_SIGNAL_FLAGS_NONE, _manager_device_found, (gpointer) bzt_adapter_get_dbus_object_path(adapter), NULL);
         exit_if_error(error);
-        guint prop_sig_sub_id = g_dbus_connection_signal_subscribe(system_conn, "org.bluez", "org.freedesktop.DBus.Properties", "PropertiesChanged", adapter_get_dbus_object_path(adapter), NULL, G_DBUS_SIGNAL_FLAGS_NONE, _adapter_property_changed, mainloop, NULL);
+        guint prop_sig_sub_id = g_dbus_connection_signal_subscribe(system_conn, "org.bluez", "org.freedesktop.DBus.Properties", "PropertiesChanged", bzt_adapter_get_dbus_object_path(adapter), NULL, G_DBUS_SIGNAL_FLAGS_NONE, _adapter_property_changed, mainloop, NULL);
         exit_if_error(error);
         
         g_print("Searching...\n");
-        adapter_start_discovery(adapter, &error);
+        bzt_adapter_start_discovery(adapter, &error);
         exit_if_error(error);
 
         g_main_loop_run(mainloop);
@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
         set_property_arg = argv[1];
         set_value_arg = argv[2];
 
-        Adapter *adapter = find_adapter(adapter_arg, &error);
+        BztAdapter *adapter = find_adapter(adapter_arg, &error);
         exit_if_error(error);
 
         GVariant *v = NULL;
@@ -287,21 +287,21 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        GVariant *props = adapter_get_properties(adapter, &error);
+        GVariant *props = bzt_adapter_get_properties(adapter, &error);
         exit_if_error(error);
         
         if(g_ascii_strcasecmp(set_property_arg, "Alias") == 0)
-            adapter_set_alias(adapter, g_variant_get_string(v, NULL), &error);
+            bzt_adapter_set_alias(adapter, g_variant_get_string(v, NULL), &error);
         else if(g_ascii_strcasecmp(set_property_arg, "Discoverable") == 0)
-            adapter_set_discoverable(adapter, g_variant_get_boolean(v), &error);
+            bzt_adapter_set_discoverable(adapter, g_variant_get_boolean(v), &error);
         else if(g_ascii_strcasecmp(set_property_arg, "DiscoverableTimeout") == 0)
-            adapter_set_discoverable_timeout(adapter, g_variant_get_uint32(v), &error);
+            bzt_adapter_set_discoverable_timeout(adapter, g_variant_get_uint32(v), &error);
         else if(g_ascii_strcasecmp(set_property_arg, "Pairable") == 0)
-            adapter_set_pairable(adapter, g_variant_get_boolean(v), &error);
+            bzt_adapter_set_pairable(adapter, g_variant_get_boolean(v), &error);
         else if(g_ascii_strcasecmp(set_property_arg, "PairableTimeout") == 0)
-            adapter_set_pairable_timeout(adapter, g_variant_get_uint32(v), &error);
+            bzt_adapter_set_pairable_timeout(adapter, g_variant_get_uint32(v), &error);
         else if(g_ascii_strcasecmp(set_property_arg, "Powered") == 0)
-            adapter_set_powered(adapter, g_variant_get_boolean(v), &error);
+            bzt_adapter_set_powered(adapter, g_variant_get_boolean(v), &error);
         
         exit_if_error(error);
         

@@ -79,10 +79,10 @@ static void _obex_server_object_manager_handler(GDBusConnection *connection, con
         GVariant *interfaces_and_properties = g_variant_get_child_value(parameters, 1);
         GVariant *properties = NULL;
 
-        if(g_variant_lookup(interfaces_and_properties, OBEX_TRANSFER_DBUS_INTERFACE, "@a{sv}", &properties))
+        if(g_variant_lookup(interfaces_and_properties, BZT_OBEX_TRANSFER_DBUS_INTERFACE, "@a{sv}", &properties))
         {
             g_print("[OBEX Server] Transfer started\n");
-            ObexTransfer *t = obex_transfer_new(interface_object_path);
+            BztObexTransfer *t = bzt_obex_transfer_new(interface_object_path);
             g_hash_table_insert(_transfers, g_strdup(interface_object_path), t);
 
             GVariant* size_variant = g_variant_lookup_value(properties, "Size", NULL);
@@ -92,8 +92,8 @@ static void _obex_server_object_manager_handler(GDBusConnection *connection, con
             ObexTransferInfo *info = g_malloc0(sizeof(ObexTransferInfo));
             info->status = g_strdup(g_variant_get_string(status_variant, NULL));
 
-            ObexSession *session = obex_session_new(g_variant_get_string(session_variant, NULL));
-            info->obex_root = g_strdup(obex_session_get_root(session, NULL));
+            BztObexSession *session = bzt_obex_session_new(g_variant_get_string(session_variant, NULL));
+            info->obex_root = g_strdup(bzt_obex_session_get_root(session, NULL));
             g_object_unref(session);
 
             if (size_variant != NULL)
@@ -112,7 +112,7 @@ static void _obex_server_object_manager_handler(GDBusConnection *connection, con
             g_hash_table_insert(_transfer_infos, g_strdup(interface_object_path), info);
         }
 
-        if(g_variant_lookup(interfaces_and_properties, OBEX_SESSION_DBUS_INTERFACE, "@a{sv}", &properties))
+        if(g_variant_lookup(interfaces_and_properties, BZT_OBEX_SESSION_DBUS_INTERFACE, "@a{sv}", &properties))
         {
             g_print("[OBEX Server] OBEX session opened\n");
         }
@@ -130,14 +130,14 @@ static void _obex_server_object_manager_handler(GDBusConnection *connection, con
         const gchar **inf = NULL;
         for(inf = inf_array; *inf != NULL; inf++)
         {
-            if(g_strcmp0(*inf, OBEX_TRANSFER_DBUS_INTERFACE) == 0)
+            if(g_strcmp0(*inf, BZT_OBEX_TRANSFER_DBUS_INTERFACE) == 0)
             {
                 g_print("[OBEX Server] OBEX transfer closed\n");
                 g_hash_table_remove(_transfers, interface_object_path);
                 g_hash_table_remove(_transfer_infos, interface_object_path);
             }
             
-            if(g_strcmp0(*inf, OBEX_SESSION_DBUS_INTERFACE) == 0)
+            if(g_strcmp0(*inf, BZT_OBEX_SESSION_DBUS_INTERFACE) == 0)
             {
                 g_print("[OBEX Server] OBEX session closed\n");
             }
@@ -151,16 +151,16 @@ static void _obex_server_properties_handler(GDBusConnection *connection, const g
     const gchar *arg0 = g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL);
     GVariant *changed_properties = g_variant_get_child_value(parameters, 1);
     
-    if(g_strcmp0(arg0, OBEX_TRANSFER_DBUS_INTERFACE) == 0)
+    if(g_strcmp0(arg0, BZT_OBEX_TRANSFER_DBUS_INTERFACE) == 0)
     {
-        ObexTransfer *transfer = g_hash_table_lookup(_transfers, object_path);
+        BztObexTransfer *transfer = g_hash_table_lookup(_transfers, object_path);
         
         guint64 size = 0x0;
         guint64 transferred = 0x0;
-        obex_transfer_get_size(transfer, NULL);
+        bzt_obex_transfer_get_size(transfer, NULL);
         g_variant_lookup(changed_properties, "Size", "t", &size);
         if(!size)
-            size = obex_transfer_get_size(transfer, NULL);
+            size = bzt_obex_transfer_get_size(transfer, NULL);
         g_variant_lookup(changed_properties, "Transferred", "t", &transferred);
         
         if(size && transferred)
@@ -232,10 +232,10 @@ static void _obex_opp_client_object_manager_handler(GDBusConnection *connection,
         GVariant *interfaces_and_properties = g_variant_get_child_value(parameters, 1);
         GVariant *properties = NULL;
         
-        if(g_variant_lookup(interfaces_and_properties, OBEX_TRANSFER_DBUS_INTERFACE, "@a{sv}", &properties))
+        if(g_variant_lookup(interfaces_and_properties, BZT_OBEX_TRANSFER_DBUS_INTERFACE, "@a{sv}", &properties))
         {
             // g_print("[OBEX Client] Transfer started\n");
-            ObexTransfer *t = obex_transfer_new(interface_object_path);
+            BztObexTransfer *t = bzt_obex_transfer_new(interface_object_path);
             g_hash_table_insert(_transfers, g_strdup(interface_object_path), t);
 
             ObexTransferInfo *info = g_malloc0(sizeof(ObexTransferInfo));
@@ -248,8 +248,8 @@ static void _obex_opp_client_object_manager_handler(GDBusConnection *connection,
             info->filesize = g_variant_get_uint64(size_variant);
             info->filename = g_variant_dup_string(name_variant, NULL);
             info->status = g_variant_dup_string(status_variant, NULL);
-            ObexSession *session = obex_session_new(g_variant_get_string(session_variant, NULL));
-            info->obex_root = g_strdup(obex_session_get_root(session, NULL));
+            BztObexSession *session = bzt_obex_session_new(g_variant_get_string(session_variant, NULL));
+            info->obex_root = g_strdup(bzt_obex_session_get_root(session, NULL));
 
             g_variant_unref(size_variant);
             g_variant_unref(name_variant);
@@ -262,7 +262,7 @@ static void _obex_opp_client_object_manager_handler(GDBusConnection *connection,
                 g_print("[Transfer#%s] Waiting...\n", info->filename);
         }
         
-        if(g_variant_lookup(interfaces_and_properties, OBEX_SESSION_DBUS_INTERFACE, "@a{sv}", &properties))
+        if(g_variant_lookup(interfaces_and_properties, BZT_OBEX_SESSION_DBUS_INTERFACE, "@a{sv}", &properties))
         {
             // g_print("[OBEX Client] OBEX session opened\n");
         }
@@ -282,7 +282,7 @@ static void _obex_opp_client_object_manager_handler(GDBusConnection *connection,
         const gchar **inf = NULL;
         for(inf = inf_array; *inf != NULL; inf++)
         {
-            if(g_strcmp0(*inf, OBEX_TRANSFER_DBUS_INTERFACE) == 0)
+            if(g_strcmp0(*inf, BZT_OBEX_TRANSFER_DBUS_INTERFACE) == 0)
             {
                 // g_print("[OBEX Client] OBEX transfer closed\n");
                 g_hash_table_remove(_transfers, interface_object_path);
@@ -291,7 +291,7 @@ static void _obex_opp_client_object_manager_handler(GDBusConnection *connection,
                     g_main_loop_quit(mainloop);
             }
             
-            if(g_strcmp0(*inf, OBEX_SESSION_DBUS_INTERFACE) == 0)
+            if(g_strcmp0(*inf, BZT_OBEX_SESSION_DBUS_INTERFACE) == 0)
             {
                 // g_print("[OBEX Client] OBEX session closed\n");
             }
@@ -305,17 +305,17 @@ static void _obex_opp_client_properties_handler(GDBusConnection *connection, con
     const gchar *arg0 = g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL);
     GVariant *changed_properties = g_variant_get_child_value(parameters, 1);
     
-    if(g_strcmp0(arg0, OBEX_TRANSFER_DBUS_INTERFACE) == 0)
+    if(g_strcmp0(arg0, BZT_OBEX_TRANSFER_DBUS_INTERFACE) == 0)
     {
-        ObexTransfer *transfer = g_hash_table_lookup(_transfers, object_path);
+        BztObexTransfer *transfer = g_hash_table_lookup(_transfers, object_path);
         ObexTransferInfo *info = g_hash_table_lookup(_transfer_infos, object_path);
         
         guint64 size = 0x0;
         guint64 transferred = 0x0;
-        obex_transfer_get_size(transfer, NULL);
+        bzt_obex_transfer_get_size(transfer, NULL);
         g_variant_lookup(changed_properties, "Size", "t", &size);
         if(!size)
-            size = obex_transfer_get_size(transfer, NULL);
+            size = bzt_obex_transfer_get_size(transfer, NULL);
         g_variant_lookup(changed_properties, "Transferred", "t", &transferred);
         
         if(size && transferred && g_strcmp0(info->status, "active") == 0)
@@ -324,7 +324,7 @@ static void _obex_opp_client_properties_handler(GDBusConnection *connection, con
 
             if (!_update_progress)
             {
-                g_print("[Transfer#%s] Progress: %3u%%", obex_transfer_get_name(transfer, NULL), pp);
+                g_print("[Transfer#%s] Progress: %3u%%", bzt_obex_transfer_get_name(transfer, NULL), pp);
                 _update_progress = TRUE;
             }
             else
@@ -400,9 +400,9 @@ void _agent_approved_callback(ObexAgent *obex_agent, const gchar* obex_transfer_
     {
         info = g_malloc0(sizeof(ObexTransferInfo));
         g_hash_table_insert(_transfer_infos, g_strdup(obex_transfer_path), info);
-        ObexTransfer *transfer = g_hash_table_lookup(_transfers, obex_transfer_path);
-        ObexSession *session = obex_session_new(obex_transfer_get_session(transfer, NULL));
-        info->obex_root = g_strdup(obex_session_get_root(session, NULL));
+        BztObexTransfer *transfer = g_hash_table_lookup(_transfers, obex_transfer_path);
+        BztObexSession *session = bzt_obex_session_new(bzt_obex_transfer_get_session(transfer, NULL));
+        info->obex_root = g_strdup(bzt_obex_session_get_root(session, NULL));
     }
     info->filename = g_strdup(name);
     info->filesize = size;
@@ -527,7 +527,7 @@ int main(int argc, char *argv[])
         _transfers = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_object_unref);
         _transfer_infos = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)obex_transfer_info_free);
 
-        ObexAgentManager *manager = obex_agent_manager_new();
+        BztObexAgentManager *manager = bzt_obex_agent_manager_new();
         
         guint obex_server_object_id = g_dbus_connection_signal_subscribe(session_conn, "org.bluez.obex", "org.freedesktop.DBus.ObjectManager", NULL, NULL, NULL, G_DBUS_SIGNAL_FLAGS_NONE, _obex_server_object_manager_handler, NULL, NULL);
         guint obex_server_properties_id = g_dbus_connection_signal_subscribe(session_conn, "org.bluez.obex", "org.freedesktop.DBus.Properties", "PropertiesChanged", NULL, NULL, G_DBUS_SIGNAL_FLAGS_NONE, _obex_server_properties_handler, NULL, NULL);
@@ -537,7 +537,7 @@ int main(int argc, char *argv[])
         g_free(root_folder);
         obex_agent_set_approved_callback(agent, _agent_approved_callback, NULL);
 
-        obex_agent_manager_register_agent(manager, OBEX_AGENT_DBUS_PATH, &error);
+        bzt_obex_agent_manager_register_agent(manager, OBEX_AGENT_DBUS_PATH, &error);
         exit_if_error(error);
 
         mainloop = g_main_loop_new(NULL, FALSE);
@@ -562,7 +562,7 @@ int main(int argc, char *argv[])
         g_hash_table_iter_init(&iter, _transfers);
         while (g_hash_table_iter_next(&iter, &key, &value))
         {
-            obex_transfer_cancel(OBEX_TRANSFER(value), NULL);
+            bzt_obex_transfer_cancel(BZT_OBEX_TRANSFER(value), NULL);
         }
         g_hash_table_unref(_transfers);
         g_hash_table_unref(_transfer_infos);
@@ -572,7 +572,7 @@ int main(int argc, char *argv[])
         
         g_free(_root_path);
         
-        obex_agent_manager_unregister_agent(manager, OBEX_AGENT_DBUS_PATH, &error);
+        bzt_obex_agent_manager_unregister_agent(manager, OBEX_AGENT_DBUS_PATH, &error);
         g_object_unref(agent);
         g_object_unref(manager);
     }
@@ -594,9 +594,9 @@ int main(int argc, char *argv[])
         files_to_send[0] = g_path_is_absolute(opp_file_arg) ? g_strdup(opp_file_arg) : get_absolute_path(opp_file_arg);
 
         /* Get source address (address of adapter) */
-        Adapter *adapter = find_adapter(adapter_arg, &error);
+        BztAdapter *adapter = find_adapter(adapter_arg, &error);
         exit_if_error(error);
-        gchar *src_address = g_strdup(adapter_get_address(adapter, &error));
+        gchar *src_address = g_strdup(bzt_adapter_get_address(adapter, &error));
         exit_if_error(error);
         
         /* Get destination address (address of remote device) */
@@ -607,9 +607,9 @@ int main(int argc, char *argv[])
         }
         else
         {
-            Device *device = find_device(adapter, opp_device_arg, &error);
+            BztDevice *device = find_device(adapter, opp_device_arg, &error);
             exit_if_error(error);
-            dst_address = g_strdup(device_get_address(device, &error));
+            dst_address = g_strdup(bzt_device_get_address(device, &error));
             exit_if_error(error);
             g_object_unref(device);
         }
@@ -625,18 +625,18 @@ int main(int argc, char *argv[])
 
         mainloop = g_main_loop_new(NULL, FALSE);
 
-        ObexClient *client = obex_client_new();
-        const gchar *session_path = obex_client_create_session(client, dst_address, g_variant_ref(device_dict), &error);
+        BztObexClient *client = bzt_obex_client_new();
+        const gchar *session_path = bzt_obex_client_create_session(client, dst_address, g_variant_ref(device_dict), &error);
         exit_if_error(error);
-        ObexSession *session = obex_session_new(session_path);
-        ObexObjectPush *oop = obex_object_push_new(obex_session_get_dbus_object_path(session));
+        BztObexSession *session = bzt_obex_session_new(session_path);
+        BztObexObjectPush *oop = bzt_obex_object_push_new(bzt_obex_session_get_dbus_object_path(session));
         
         // initialize GDBus OBEX OPP client callbacks
         guint obex_opp_object_man_id = g_dbus_connection_signal_subscribe(session_conn, "org.bluez.obex", "org.freedesktop.DBus.ObjectManager", NULL, NULL, NULL, G_DBUS_SIGNAL_FLAGS_NONE, _obex_opp_client_object_manager_handler, NULL, NULL);
         guint obex_opp_properties_id = g_dbus_connection_signal_subscribe(session_conn, "org.bluez.obex", "org.freedesktop.DBus.Properties", "PropertiesChanged", NULL, NULL, G_DBUS_SIGNAL_FLAGS_NONE, _obex_opp_client_properties_handler, NULL, NULL);
         
         /* Sending file(s) */
-        obex_object_push_send_file(oop, files_to_send[0], &error);
+        bzt_obex_object_push_send_file(oop, files_to_send[0], &error);
         exit_if_error(error);
 
         /* Add SIGTERM && SIGINT handlers */
@@ -662,7 +662,7 @@ int main(int argc, char *argv[])
         g_hash_table_iter_init(&iter, _transfers);
         while (g_hash_table_iter_next(&iter, &key, &value))
         {
-            obex_transfer_cancel(OBEX_TRANSFER(value), NULL);
+            bzt_obex_transfer_cancel(BZT_OBEX_TRANSFER(value), NULL);
         }
         g_hash_table_unref(_transfers);
 
@@ -679,15 +679,15 @@ int main(int argc, char *argv[])
     else if (ftp_arg)
     {
         /* Get source address (address of adapter) */
-        Adapter *adapter = find_adapter(adapter_arg, &error);
+        BztAdapter *adapter = find_adapter(adapter_arg, &error);
         exit_if_error(error);
-        gchar *src_address = g_strdup(adapter_get_address(adapter, &error));
+        gchar *src_address = g_strdup(bzt_adapter_get_address(adapter, &error));
         exit_if_error(error);
 
         /* Get destination address (address of remote device) */
-        Device *device = find_device(adapter, ftp_arg, &error);
+        BztDevice *device = find_device(adapter, ftp_arg, &error);
         exit_if_error(error);
-        gchar *dst_address = g_strdup(device == NULL ? ftp_arg : device_get_address(device, &error));
+        gchar *dst_address = g_strdup(device == NULL ? ftp_arg : bzt_device_get_address(device, &error));
         exit_if_error(error);
 
         g_object_unref(device);
@@ -702,14 +702,14 @@ int main(int argc, char *argv[])
         device_dict = g_variant_builder_end(b);
         g_variant_builder_unref(b);
 
-        ObexClient *client = g_object_new(OBEX_CLIENT_TYPE, NULL);
+        BztObexClient *client = g_object_new(BZT_TYPE_OBEX_CLIENT, NULL);
         ObexAgent *agent = g_object_new(OBEX_AGENT_TYPE, NULL);
 
         /* Create FTP session */
-        gchar *session_path = g_strdup(obex_client_create_session(client, dst_address, device_dict, &error));
+        gchar *session_path = g_strdup(bzt_obex_client_create_session(client, dst_address, device_dict, &error));
         exit_if_error(error);
 
-        ObexFileTransfer *ftp_session = obex_file_transfer_new(session_path);
+        BztObexFileTransfer *ftp_session = bzt_obex_file_transfer_new(session_path);
         g_free(session_path);
 
         g_print("FTP session opened\n");
@@ -748,7 +748,7 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    obex_file_transfer_change_folder(ftp_session, f_argv[1], &error);
+                    bzt_obex_file_transfer_change_folder(ftp_session, f_argv[1], &error);
                     if (error)
                     {
                         g_print("%s\n", error->message);
@@ -765,7 +765,7 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    obex_file_transfer_create_folder(ftp_session, f_argv[1], &error);
+                    bzt_obex_file_transfer_create_folder(ftp_session, f_argv[1], &error);
                     if (error)
                     {
                         g_print("%s\n", error->message);
@@ -783,7 +783,7 @@ int main(int argc, char *argv[])
                 else
                 {
                     // GPtrArray *folders = obex_file_transfer_list_folder(ftp_session, &error);
-                    GVariant *folder_list = obex_file_transfer_list_folder(ftp_session, &error);
+                    GVariant *folder_list = bzt_obex_file_transfer_list_folder(ftp_session, &error);
                     GPtrArray *folders = g_ptr_array_new();
                     gsize arr_size = 0;
                     // Pass the pointer
@@ -858,7 +858,7 @@ int main(int argc, char *argv[])
                     }
                     else
                     {
-                        obex_file_transfer_get_file(ftp_session, abs_dst_path, f_argv[1], &error);
+                        bzt_obex_file_transfer_get_file(ftp_session, abs_dst_path, f_argv[1], &error);
                         if (error)
                         {
                             g_print("%s\n", error->message);
@@ -887,7 +887,7 @@ int main(int argc, char *argv[])
                     }
                     else
                     {
-                        obex_file_transfer_put_file(ftp_session, abs_src_path, f_argv[2], &error);
+                        bzt_obex_file_transfer_put_file(ftp_session, abs_src_path, f_argv[2], &error);
                         if (error)
                         {
                             g_print("%s\n", error->message);
@@ -906,7 +906,7 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    obex_file_transfer_copy_file(ftp_session, f_argv[1], f_argv[2], &error);
+                    bzt_obex_file_transfer_copy_file(ftp_session, f_argv[1], f_argv[2], &error);
                     if (error)
                     {
                         g_print("%s\n", error->message);
@@ -923,7 +923,7 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    obex_file_transfer_move_file(ftp_session, f_argv[1], f_argv[2], &error);
+                    bzt_obex_file_transfer_move_file(ftp_session, f_argv[1], f_argv[2], &error);
                     if (error)
                     {
                         g_print("%s\n", error->message);
@@ -940,7 +940,7 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    obex_file_transfer_delete(ftp_session, f_argv[1], &error);
+                    bzt_obex_file_transfer_delete(ftp_session, f_argv[1], &error);
                     if (error)
                     {
                         g_print("%s\n", error->message);
@@ -966,7 +966,7 @@ int main(int argc, char *argv[])
             }
             else if (g_strcmp0(f_argv[0], "exit") == 0 || g_strcmp0(f_argv[0], "quit") == 0)
             {
-                obex_client_remove_session(client, obex_file_transfer_get_dbus_object_path(ftp_session), &error);
+                bzt_obex_client_remove_session(client, bzt_obex_file_transfer_get_dbus_object_path(ftp_session), &error);
                 exit_if_error(error);
 
                 g_strfreev(f_argv);

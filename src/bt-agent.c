@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
 	BztManager *manager = bzt_manager_new(NULL, &error);
 	exit_if_error(error);
         
-        AgentManager *agent_manager = agent_manager_new();
+        BztAgentManager *agent_manager = bzt_agent_manager_new();
 
         if(daemon_arg)
             register_agent_callbacks(FALSE, pin_hash_table, mainloop, &error);
@@ -244,11 +244,11 @@ int main(int argc, char *argv[])
         
         exit_if_error(error);
         
-        agent_manager_register_agent(agent_manager, AGENT_PATH, capability_arg, &error);
+        bzt_agent_manager_register_agent(agent_manager, AGENT_PATH, capability_arg, &error);
 	exit_if_error(error);
 	g_print("Agent registered\n");
         
-        agent_manager_request_default_agent(agent_manager, AGENT_PATH, &error);
+        bzt_agent_manager_request_default_agent(agent_manager, AGENT_PATH, &error);
 	exit_if_error(error);
         g_print("Default agent requested\n");
 
@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
 
 	if (need_unregister) {
                 g_print("unregistering agent...\n");
-                agent_manager_unregister_agent(agent_manager, AGENT_PATH, &error);
+                bzt_agent_manager_unregister_agent(agent_manager, AGENT_PATH, &error);
 		exit_if_error(error);
 	}
 

@@ -159,37 +159,37 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	Adapter *adapter = find_adapter(adapter_arg, &error);
+	BztAdapter *adapter = find_adapter(adapter_arg, &error);
 	exit_if_error(error);
 
 	if (connect_arg) {
 		connect_device_arg = argv[1];
 		connect_uuid_arg = argv[2];
 
-		Device *device = find_device(adapter, connect_device_arg, &error);
+		BztDevice *device = find_device(adapter, connect_device_arg, &error);
 		exit_if_error(error);
 
-		if (!intf_supported(BLUEZ_DBUS_SERVICE_NAME, device_get_dbus_object_path(device), NETWORK_DBUS_INTERFACE)) {
+		if (!intf_supported(BLUEZ_DBUS_SERVICE_NAME, bzt_device_get_dbus_object_path(device), BZT_NETWORK_DBUS_INTERFACE)) {
 			g_printerr("Network service is not supported by this device\n");
 			exit(EXIT_FAILURE);
 		}
 
 		mainloop = g_main_loop_new(NULL, FALSE);
 
-                Network *network = network_new(device_get_dbus_object_path(device));
-                guint prop_sig_sub_id = g_dbus_connection_signal_subscribe(system_conn, "org.bluez", "org.freedesktop.DBus.Properties", "PropertiesChanged", network_get_dbus_object_path(network), NULL, G_DBUS_SIGNAL_FLAGS_NONE, _bt_network_property_changed, mainloop, NULL);
+                BztNetwork *network = bzt_network_new(bzt_device_get_dbus_object_path(device));
+                guint prop_sig_sub_id = g_dbus_connection_signal_subscribe(system_conn, "org.bluez", "org.freedesktop.DBus.Properties", "PropertiesChanged", bzt_network_get_dbus_object_path(network), NULL, G_DBUS_SIGNAL_FLAGS_NONE, _bt_network_property_changed, mainloop, NULL);
 
-		if (network_get_connected(network, NULL) == TRUE) {
+		if (bzt_network_get_connected(network, NULL) == TRUE) {
 			g_print("Network service is already connected\n");
 		} else {
-			gchar *intf = (gchar *) network_connect(network, connect_uuid_arg, &error);
+			gchar *intf = (gchar *) bzt_network_connect(network, connect_uuid_arg, &error);
 			exit_if_error(error);
 			trap_signals();
 			g_main_loop_run(mainloop);
 
 			/* Force disconnect the network device */
-			if (network_get_connected(network, NULL) == TRUE) {
-				network_disconnect(network, NULL);
+			if (bzt_network_get_connected(network, NULL) == TRUE) {
+				bzt_network_disconnect(network, NULL);
 			}
 			g_free(intf);
 		}
@@ -208,15 +208,15 @@ int main(int argc, char *argv[])
 			exit(EXIT_FAILURE);
 		}
 
-		if (!intf_supported(BLUEZ_DBUS_SERVICE_NAME, adapter_get_dbus_object_path(adapter), NETWORK_SERVER_DBUS_INTERFACE)) {
+		if (!intf_supported(BLUEZ_DBUS_SERVICE_NAME, bzt_adapter_get_dbus_object_path(adapter), BZT_NETWORK_SERVER_DBUS_INTERFACE)) {
 			g_printerr("Network server is not supported by this adapter\n");
 			exit(EXIT_FAILURE);
 		}
 
 		gchar *server_uuid_upper = g_ascii_strup(server_uuid_arg, -1);
 
-                NetworkServer *network_server = network_server_new(adapter_get_dbus_object_path(adapter));
-		network_server_register(network_server, server_uuid_arg, server_brige_arg, &error);
+                BztNetworkServer *network_server = bzt_network_server_new(bzt_adapter_get_dbus_object_path(adapter));
+		bzt_network_server_register(network_server, server_uuid_arg, server_brige_arg, &error);
 		exit_if_error(error);
 		g_print("%s server registered\n", server_uuid_upper);
 
@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
 
 		g_main_loop_run(mainloop);
 
-		network_server_unregister(network_server, server_uuid_arg, &error);
+		bzt_network_server_unregister(network_server, server_uuid_arg, &error);
 		exit_if_error(error);
 		g_print("%s server unregistered\n", server_uuid_upper);
 

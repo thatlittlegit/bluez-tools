@@ -509,12 +509,12 @@ int main(int argc, char *argv[])
 
     BztManager *manager = bzt_manager_new(NULL, &error);
     exit_if_error(error);
-    Adapter *adapter = find_adapter(adapter_arg, &error);
+    BztAdapter *adapter = find_adapter(adapter_arg, &error);
     exit_if_error(error);
 
     if (list_arg)
     {
-        const gchar **devices_list = bzt_manager_get_devices(manager, adapter_get_dbus_object_path(adapter));
+        const gchar **devices_list = bzt_manager_get_devices(manager, bzt_adapter_get_dbus_object_path(adapter));
 
         if (devices_list == NULL)
         {
@@ -527,8 +527,8 @@ int main(int argc, char *argv[])
         for (devices = devices_list; *devices != NULL; devices++)
         {
             const gchar *device_path = *devices;
-            Device *device = device_new(device_path);
-            g_print("%s (%s)\n", device_get_alias(device, &error), device_get_address(device, &error));
+            BztDevice *device = bzt_device_new(device_path);
+            g_print("%s (%s)\n", bzt_device_get_alias(device, &error), bzt_device_get_address(device, &error));
             exit_if_error(error);
             g_object_unref(device);
         }
@@ -538,17 +538,17 @@ int main(int argc, char *argv[])
         g_print("Connecting to: %s\n", connect_arg);
         GMainLoop *mainloop = g_main_loop_new(NULL, FALSE);
 
-        AgentManager *agent_manager = agent_manager_new();
+        BztAgentManager *agent_manager = bzt_agent_manager_new();
         
         agent_need_unregister = TRUE;
         
         register_agent_callbacks(TRUE, NULL, mainloop, &error);
         exit_if_error(error);
         
-        agent_manager_register_agent(agent_manager, AGENT_PATH, "DisplayYesNo", &error);
+        bzt_agent_manager_register_agent(agent_manager, AGENT_PATH, "DisplayYesNo", &error);
         exit_if_error(error);
         
-        Device *device = find_device(adapter, connect_arg, &error);
+        BztDevice *device = find_device(adapter, connect_arg, &error);
         exit_if_error(error);
         if(!device)
         {
@@ -560,7 +560,7 @@ int main(int argc, char *argv[])
         g_hash_table_insert(user_data_hash, "device", device);
         g_hash_table_insert(user_data_hash, "mainloop", mainloop);
         
-	device_pair(device, &error);
+	bzt_device_pair(device, &error);
 	exit_if_error(error);
         // HACK async is not generated device_pair(device, (GAsyncReadyCallback) _bt_device_pair_callback, (gpointer) user_data_hash);
 	// HACK async is not generated _bt_device_pair_callback(user_data_hash);
@@ -574,7 +574,7 @@ int main(int argc, char *argv[])
     }
     else if (disconnect_arg)
     {
-        Device *device = find_device(adapter, disconnect_arg, &error);
+        BztDevice *device = find_device(adapter, disconnect_arg, &error);
         exit_if_error(error);
         if(!device)
         {
@@ -583,7 +583,7 @@ int main(int argc, char *argv[])
         }
 
         g_print("Disconnecting: %s\n", disconnect_arg);
-        device_disconnect(device, &error);
+        bzt_device_disconnect(device, &error);
         exit_if_error(error);
 
         g_print("Done\n");
@@ -591,7 +591,7 @@ int main(int argc, char *argv[])
     }
     else if (remove_arg)
     {
-        Device *device = find_device(adapter, remove_arg, &error);
+        BztDevice *device = find_device(adapter, remove_arg, &error);
         exit_if_error(error);
         if(!device)
         {
@@ -599,7 +599,7 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
         
-        adapter_remove_device(adapter, device_get_dbus_object_path(device), &error);
+        bzt_adapter_remove_device(adapter, bzt_device_get_dbus_object_path(device), &error);
         exit_if_error(error);
 
         g_print("Done\n");
@@ -607,7 +607,7 @@ int main(int argc, char *argv[])
     }
     else if (info_arg)
     {
-        Device *device = find_device(adapter, info_arg, &error);
+        BztDevice *device = find_device(adapter, info_arg, &error);
         exit_if_error(error);
         if(!device)
         {
@@ -615,18 +615,18 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        g_print("[%s]\n", device_get_address(device, NULL));
-        g_print("  Name: %s\n", device_get_name(device, NULL));
-        g_print("  Alias: %s [rw]\n", device_get_alias(device, NULL));
-        g_print("  Address: %s\n", device_get_address(device, NULL));
-        g_print("  Icon: %s\n", device_get_icon(device, NULL));
-        g_print("  Class: 0x%x\n", device_get_class(device, NULL));
-        g_print("  Paired: %d\n", device_get_paired(device, NULL));
-        g_print("  Trusted: %d [rw]\n", device_get_trusted(device, NULL));
-        g_print("  Blocked: %d [rw]\n", device_get_blocked(device, NULL));
-        g_print("  Connected: %d\n", device_get_connected(device, NULL));
+        g_print("[%s]\n", bzt_device_get_address(device, NULL));
+        g_print("  Name: %s\n", bzt_device_get_name(device, NULL));
+        g_print("  Alias: %s [rw]\n", bzt_device_get_alias(device, NULL));
+        g_print("  Address: %s\n", bzt_device_get_address(device, NULL));
+        g_print("  Icon: %s\n", bzt_device_get_icon(device, NULL));
+        g_print("  Class: 0x%x\n", bzt_device_get_class(device, NULL));
+        g_print("  Paired: %d\n", bzt_device_get_paired(device, NULL));
+        g_print("  Trusted: %d [rw]\n", bzt_device_get_trusted(device, NULL));
+        g_print("  Blocked: %d [rw]\n", bzt_device_get_blocked(device, NULL));
+        g_print("  Connected: %d\n", bzt_device_get_connected(device, NULL));
         g_print("  UUIDs: [");
-        const gchar **uuids = device_get_uuids(device, NULL);
+        const gchar **uuids = bzt_device_get_uuids(device, NULL);
         for (int j = 0; uuids[j] != NULL; j++)
         {
             if (j > 0) g_print(", ");
@@ -644,7 +644,7 @@ int main(int argc, char *argv[])
             services_pattern_arg = argv[2];
         }
 
-        Device *device = find_device(adapter, services_device_arg, &error);
+        BztDevice *device = find_device(adapter, services_device_arg, &error);
         exit_if_error(error);
         if(!device)
         {
@@ -652,7 +652,7 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
         
-        const gchar *device_address = device_get_address(device, &error);
+        const gchar *device_address = bzt_device_get_address(device, &error);
         exit_if_error(error);
 
         g_print("Discovering services...\n");
@@ -691,7 +691,7 @@ int main(int argc, char *argv[])
         set_property_arg = argv[2];
         set_value_arg = argv[3];
 
-        Device *device = find_device(adapter, set_device_arg, &error);
+        BztDevice *device = find_device(adapter, set_device_arg, &error);
         exit_if_error(error);
         if(!device)
         {
@@ -732,15 +732,15 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        GVariant *props = device_get_properties(device, &error);
+        GVariant *props = bzt_device_get_properties(device, &error);
         exit_if_error(error);
         
         if(g_ascii_strcasecmp(set_property_arg, "Alias") == 0)
-            device_set_alias(device, g_variant_get_string(v, NULL), &error);
+            bzt_device_set_alias(device, g_variant_get_string(v, NULL), &error);
         else if(g_ascii_strcasecmp(set_property_arg, "Blocked") == 0)
-            device_set_blocked(device, g_variant_get_boolean(v), &error);
+            bzt_device_set_blocked(device, g_variant_get_boolean(v), &error);
         else if(g_ascii_strcasecmp(set_property_arg, "Trusted") == 0)
-            device_set_trusted(device, g_variant_get_boolean(v), &error);
+            bzt_device_set_trusted(device, g_variant_get_boolean(v), &error);
         
         exit_if_error(error);
         

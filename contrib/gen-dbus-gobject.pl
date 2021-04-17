@@ -326,33 +326,11 @@ extern "C" {
 #include <glib-object.h>
 
 {DBUS_OBJECT_DEFS}
-/*
- * Type macros
- */
-#define {\$OBJECT}_TYPE				({\$object}_get_type())
-#define {\$OBJECT}(obj)				(G_TYPE_CHECK_INSTANCE_CAST((obj), {\$OBJECT}_TYPE, {\$Object}))
-#define {\$OBJECT}_IS(obj)				(G_TYPE_CHECK_INSTANCE_TYPE((obj), {\$OBJECT}_TYPE))
-#define {\$OBJECT}_CLASS(klass)		(G_TYPE_CHECK_CLASS_CAST((klass), {\$OBJECT}_TYPE, {\$Object}Class))
-#define {\$OBJECT}_IS_CLASS(klass)		(G_TYPE_CHECK_CLASS_TYPE((klass), {\$OBJECT}_TYPE))
-#define {\$OBJECT}_GET_CLASS(obj)		(G_TYPE_INSTANCE_GET_CLASS((obj), {\$OBJECT}_TYPE, {\$Object}Class))
 
-typedef struct _{\$Object} {\$Object};
-typedef struct _{\$Object}Class {\$Object}Class;
-typedef struct _{\$Object}Private {\$Object}Private;
+G_DECLARE_FINAL_TYPE({\$Object}, {\$object}, BZT, {\$POBJECT}, GObject)
+struct dummy;
 
-struct _{\$Object} {
-	GObject parent_instance;
-
-	/*< private >*/
-	{\$Object}Private *priv;
-};
-
-struct _{\$Object}Class {
-	GObjectClass parent_class;
-};
-
-/* used by {\$OBJECT}_TYPE */
-GType {\$object}_get_type(void) G_GNUC_CONST;
+#define BZT_TYPE_{\$POBJECT} {\$object}_get_type()
 
 /*
  * Constructor
@@ -443,7 +421,7 @@ EOT
 				$method_defs .= (is_const_type($p{'type'}) eq 1 ? "const " : "").get_g_type($p{'type'})."{\$object}_get_".(join '_', (map lc $_, @new_name))."({\$Object} *self, GError **error);\n";
 			}
 			if ($p{'mode'} eq 'readwrite' or $p{'mode'} eq 'writeonly' or $p{'mode'} eq 'read/write') {
-				$method_defs .= "void {\$object}_set_".(join '_', (map lc $_, @new_name))."({\$Object} *self, const ".get_g_type($p{'type'})."value, GError **error);\n";
+				$method_defs .= "void bzt_{\$object}_set_".(join '_', (map lc $_, @new_name))."({\$Object} *self, const ".get_g_type($p{'type'})."value, GError **error);\n";
 			}
 		} else {
 			if ($p{'mode'} eq 'readwrite' or $p{'mode'} eq 'readonly' or $p{'mode'} eq 'read/write') {
@@ -466,9 +444,10 @@ EOT
         $output =~ s/\s+\{IF_METHODS\}.+?\{FI_METHODS\}//gs;
     }
     $output =~ s/{METHOD_DEFS}/$method_defs/;
-    $output =~ s/{\$OBJECT}/$obj_uc/g;
-    $output =~ s/{\$Object}/$obj/g;
-    $output =~ s/{\$object}/$obj_lc/g;
+    $output =~ s/{\$OBJECT}/BZT_$obj_uc/g;
+    $output =~ s/{\$Object}/Bzt$obj/g;
+    $output =~ s/{\$object}/bzt_$obj_lc/g;
+    $output =~ s/{\$POBJECT}/$obj_uc/g;
 
     return $output;
 }
@@ -487,11 +466,10 @@ sub generate_source {
 #include "../../src/lib/dbus-common.h"
 #include "../../src/lib/properties.h"
 
-#include "{\$object}.h"
+#include "{\$pobject}.h"
 
-#define {\$OBJECT}_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE((obj), {\$OBJECT}_TYPE, {\$Object}Private))
-
-struct _{\$Object}Private {
+struct _{\$Object} {
+	GObject parent;
 	GDBusProxy *proxy;
 	{IF_PROPERTIES}
 	Properties *properties;
@@ -501,7 +479,7 @@ struct _{\$Object}Private {
 	{FI_NO_OBJECT_PATH}
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE({\$Object}, {\$object}, G_TYPE_OBJECT);
+G_DEFINE_TYPE({\$Object}, {\$object}, G_TYPE_OBJECT);
 
 enum {
 	PROP_0,
@@ -518,14 +496,14 @@ static void {\$object}_dispose(GObject *gobject)
 	{\$Object} *self = {\$OBJECT}(gobject);
 
 	/* Proxy free */
-	g_clear_object (&self->priv->proxy);
+	g_clear_object (&self->proxy);
 	{IF_PROPERTIES_EXT}
 	/* Properties free */
-	g_clear_object(&self->priv->properties);
+	g_clear_object(&self->properties);
 	{FI_PROPERTIES_EXT}
 	{IF_NO_OBJECT_PATH}
 	/* Object path free */
-	g_free(self->priv->object_path);
+	g_free(self->object_path);
 	{FI_NO_OBJECT_PATH}
 	/* Chain up to the parent class */
 	G_OBJECT_CLASS({\$object}_parent_class)->dispose(gobject);
@@ -560,13 +538,11 @@ static void {\$object}_class_init({\$Object}Class *klass)
 
 static void {\$object}_init({\$Object} *self)
 {
-	self->priv = {\$object}_get_instance_private (self);
-	self->priv->proxy = NULL;
 	{IF_PROPERTIES}
-	self->priv->properties = NULL;
+	/* filler */
 	{FI_PROPERTIES}
 	{IF_NO_OBJECT_PATH}
-	self->priv->object_path = NULL;
+	/* filler */
 	{FI_NO_OBJECT_PATH}
 	g_assert({\$conn} != NULL);
 {CONSTRUCTOR_CALL}
@@ -607,15 +583,15 @@ static void _{\$object}_set_property(GObject *object, guint property_id, const G
 /* Private DBus proxy creation */
 static void _{\$object}_create_gdbus_proxy({\$Object} *self, const gchar *dbus_service_name, const gchar *dbus_object_path, GError **error)
 {
-	g_assert({\$OBJECT}_IS(self));
-	self->priv->proxy = g_dbus_proxy_new_sync({\$conn}, G_DBUS_PROXY_FLAGS_NONE, NULL, dbus_service_name, dbus_object_path, {\$OBJECT}_DBUS_INTERFACE, NULL, error);
+	g_assert(BZT_IS_{\$POBJECT}(self));
+	self->proxy = g_dbus_proxy_new_sync({\$conn}, G_DBUS_PROXY_FLAGS_NONE, NULL, dbus_service_name, dbus_object_path, {\$OBJECT}_DBUS_INTERFACE, NULL, error);
 
-	if(self->priv->proxy == NULL)
+	if(self->proxy == NULL)
 		return;
 
 	{IF_PROPERTIES}
-	self->priv->properties = g_object_new(PROPERTIES_TYPE, "DBusType", {\$dbus_type}, "DBusServiceName", dbus_service_name, "DBusObjectPath", dbus_object_path, NULL);
-	g_assert(self->priv->properties != NULL);
+	self->properties = g_object_new(PROPERTIES_TYPE, "DBusType", {\$dbus_type}, "DBusServiceName", dbus_service_name, "DBusObjectPath", dbus_object_path, NULL);
+	g_assert(self->properties != NULL);
 	{FI_PROPERTIES}
 }
 
@@ -627,9 +603,9 @@ static void _{\$object}_create_gdbus_proxy({\$Object} *self, const gchar *dbus_s
 /* Get DBus object path */
 const gchar *{\$object}_get_dbus_object_path({\$Object} *self)
 {
-	g_assert({\$OBJECT}_IS(self));
-	g_assert(self->priv->proxy != NULL);
-	return g_dbus_proxy_get_object_path(self->priv->proxy);
+	g_assert(BZT_IS_{\$POBJECT}(self));
+	g_assert(self->proxy != NULL);
+	return g_dbus_proxy_get_object_path(self->proxy);
 }
 {FI_NO_OBJECT_PATH}
 
@@ -679,9 +655,9 @@ EOT
 	if(not exists $node->{'objectPath'} or not defined $node->{'objectPath'}) {
 	    $constructor_setters .= 
 	    "\tcase PROP_DBUS_OBJECT_PATH:\n".
-		"\t\tself->priv->object_path = g_value_dup_string(value);\n";
+		"\t\tself->object_path = g_value_dup_string(value);\n";
 		$constructor_setters .=
-		"\t\t_{\$object}_create_gdbus_proxy(self, {\$OBJECT}_DBUS_SERVICE, self->priv->object_path, &error);\n";
+		"\t\t_{\$object}_create_gdbus_proxy(self, {\$OBJECT}_DBUS_SERVICE, self->object_path, &error);\n";
 		$constructor_setters .= "\t\tbreak;\n";
 	}
 
@@ -697,7 +673,7 @@ EOT
 	$constructor_def .=
 	")\n".
 	"{\n".
-	"\treturn g_object_new({\$OBJECT}_TYPE, ";
+	"\treturn g_object_new(BZT_TYPE_{\$POBJECT}, ";
 	if(not exists $node->{'objectPath'} or not defined $node->{'objectPath'}) {
 		$constructor_def .= "\"DBusObjectPath\", dbus_object_path, ";
 	}
@@ -730,13 +706,13 @@ EOT
 			"/* $m{'decl'} */\n".
             "$method_def\n".
             "{\n".
-            "\tg_assert({\$OBJECT}_IS(self));\n";
+            "\tg_assert(BZT_IS_{\$POBJECT}(self));\n";
             
 		if($m{'ret'} eq 'void') {
-			$methods .= "\tg_dbus_proxy_call_sync(self->priv->proxy, \"$method\", ".($in_args eq '' ? "NULL" : generate_g_variant_params($m{'args'})).", G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);\n";
+			$methods .= "\tg_dbus_proxy_call_sync(self->proxy, \"$method\", ".($in_args eq '' ? "NULL" : generate_g_variant_params($m{'args'})).", G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);\n";
 		} else {				
 			$methods .= "\t".(is_const_type($m{'ret'}) eq 1 ? "const " : "").get_g_type($m{'ret'})."ret = ".get_default_value(get_g_type($m{'ret'})).";\n".
-				"\tGVariant *proxy_ret = g_dbus_proxy_call_sync(self->priv->proxy, \"$method\", ".($in_args eq '' ? "NULL" : generate_g_variant_params($m{'args'})).", G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);\n".
+				"\tGVariant *proxy_ret = g_dbus_proxy_call_sync(self->proxy, \"$method\", ".($in_args eq '' ? "NULL" : generate_g_variant_params($m{'args'})).", G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);\n".
 				"\tif (proxy_ret == NULL)\n".
 				"\t\treturn ".get_default_value(get_g_type($m{'ret'})).";\n".
 				"\tproxy_ret = g_variant_get_child_value(proxy_ret, 0);\n";
@@ -797,16 +773,16 @@ EOT
     	$properties_access_methods .=
     	"GVariant *{\$object}_get_properties({\$Object} *self, GError **error)\n".
     	"{\n".
-    	"\tg_assert({\$OBJECT}_IS(self));\n".
-    	"\tg_assert(self->priv->properties != NULL);\n".
-    	"\treturn properties_get_all(self->priv->properties, {\$OBJECT}_DBUS_INTERFACE, error);\n".
+    	"\tg_assert(BZT_IS_{\$POBJECT}(self));\n".
+    	"\tg_assert(self->properties != NULL);\n".
+    	"\treturn properties_get_all(self->properties, {\$OBJECT}_DBUS_INTERFACE, error);\n".
     	"}\n".
     	"\n".
     	"void {\$object}_set_property({\$Object} *self, const gchar *name, const GVariant *value, GError **error)\n".
     	"{\n".
-    	"\tg_assert({\$OBJECT}_IS(self));\n".
-    	"\tg_assert(self->priv->properties != NULL);\n".
-    	"\tproperties_set(self->priv->properties, {\$OBJECT}_DBUS_INTERFACE, name, value, error);\n".
+    	"\tg_assert(BZT_IS_{\$POBJECT}(self));\n".
+    	"\tg_assert(self->properties != NULL);\n".
+    	"\tproperties_set(self->properties, {\$OBJECT}_DBUS_INTERFACE, name, value, error);\n".
     	"}\n".
     	"\n";
     }
@@ -835,9 +811,9 @@ EOT
 	        $properties_access_methods .=
 	        (is_const_type($p{'type'}) eq 1 ? "const " : "").get_g_type($p{'type'})."$property_get_method({\$Object} *self, GError **error)\n".
 	        "{\n".
-	        "\tg_assert({\$OBJECT}_IS(self));\n".
-	        "\tg_assert(self->priv->properties != NULL);\n".
-	        "\tGVariant *prop = properties_get(self->priv->properties, {\$OBJECT}_DBUS_INTERFACE, \"$property\", error);\n".
+	        "\tg_assert(BZT_IS_{\$POBJECT}(self));\n".
+	        "\tg_assert(self->properties != NULL);\n".
+	        "\tGVariant *prop = properties_get(self->properties, {\$OBJECT}_DBUS_INTERFACE, \"$property\", error);\n".
 	        "\tif(prop == NULL)\n".
 	        "\t\treturn ".get_default_value(get_g_type($p{'type'})).";\n";
 	        
@@ -892,9 +868,9 @@ EOT
             $properties_access_methods .=
             "void $property_set_method({\$Object} *self, const ".get_g_type($p{'type'})."value, GError **error)\n".
             "{\n".
-            "\tg_assert({\$OBJECT}_IS(self));\n".
-            "\tg_assert(self->priv->properties != NULL);\n".
-	        "\tproperties_set(self->priv->properties, {\$OBJECT}_DBUS_INTERFACE, \"$property\", ";
+            "\tg_assert(BZT_IS_{\$POBJECT}(self));\n".
+            "\tg_assert(self->properties != NULL);\n".
+	        "\tproperties_set(self->properties, {\$OBJECT}_DBUS_INTERFACE, \"$property\", ";
 	        
 	        if($p{'type'} eq 'boolean') {
 				$properties_access_methods .= "g_variant_new_boolean(value)";
@@ -979,9 +955,11 @@ EOT
     $output =~ s/{\$dbus_type}/$dbus_type/;
     $output =~ s/{PROPERTIES_ACCESS_METHODS}/$properties_access_methods/;
     $output =~ s/{METHODS}/$methods/;
-    $output =~ s/{\$OBJECT}/$obj_uc/g;
-    $output =~ s/{\$Object}/$obj/g;
-    $output =~ s/{\$object}/$obj_lc/g;
+    $output =~ s/{\$POBJECT}/$obj_uc/g;
+    $output =~ s/{\$OBJECT}/BZT_$obj_uc/g;
+    $output =~ s/{\$Object}/Bzt$obj/g;
+    $output =~ s/{\$object}/bzt_$obj_lc/g;
+    $output =~ s/{\$pobject}/$obj_lc/g;
 
     # Some formatting fixes
     $output =~ s/\s+?(\t*\})/\n$1/g;
