@@ -230,6 +230,7 @@ sub get_g_type {
     $g_type = 'GVariant *' if $obj_type eq 'array{dict}';
     $g_type = 'gchar **' if $obj_type eq 'array{string}';
     $g_type = 'guint8 *' if $obj_type eq 'array{byte}';
+    $g_type = 'GVariant *' if $obj_type eq 'object,dict';
 
     die "unknown object type (1): $obj_type\n" unless defined $g_type;
 
@@ -279,6 +280,7 @@ sub get_g_variant_format_char {
     # $g_variant_type = 'a&v' if $obj_type eq 'array{dict}';
     $g_variant_type = '@as' if $obj_type eq 'array{string}';
     $g_variant_type = '@ay' if $obj_type eq 'array{byte}';
+    $g_variant_type = 's' if $obj_type eq 'object,dict';
 
     die "unknown object type (1): $obj_type\n" unless defined $g_variant_type;
 
@@ -482,8 +484,8 @@ sub generate_source {
 #include <glib.h>
 #include <string.h>
 
-#include "../dbus-common.h"
-#include "../properties.h"
+#include "../../src/lib/dbus-common.h"
+#include "../../src/lib/properties.h"
 
 #include "{\$object}.h"
 
@@ -735,7 +737,7 @@ EOT
 		} else {				
 			$methods .= "\t".(is_const_type($m{'ret'}) eq 1 ? "const " : "").get_g_type($m{'ret'})."ret = ".get_default_value(get_g_type($m{'ret'})).";\n".
 				"\tGVariant *proxy_ret = g_dbus_proxy_call_sync(self->priv->proxy, \"$method\", ".($in_args eq '' ? "NULL" : generate_g_variant_params($m{'args'})).", G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);\n".
-				"\tif (proxy_ret != NULL)\n".
+				"\tif (proxy_ret == NULL)\n".
 				"\t\treturn ".get_default_value(get_g_type($m{'ret'})).";\n".
 				"\tproxy_ret = g_variant_get_child_value(proxy_ret, 0);\n";
 				

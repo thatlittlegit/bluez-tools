@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 # BlueZ API
 
@@ -145,61 +146,61 @@ echo "Generating network server source"
 # obex-agent-api.txt
 echo "obex-agent-api.txt"
 echo "Generating obex agent manager header"
-./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-agent-api.txt 1 > out/obex/obex_agent_manager.h
+./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-agent-api.txt 1 > out/obex_agent_manager.h
 echo "Generating obex agent manager source"
-./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-agent-api.txt 1 > out/obex/obex_agent_manager.c
+./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-agent-api.txt 1 > out/obex_agent_manager.c
 
 # echo "Generating obex agent header"
-# ./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-agent-api.txt 2 > out/obex/obex_agent.h
+# ./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-agent-api.txt 2 > out/obex_agent.h
 # echo "Generating obex agent source"
-# ./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-agent-api.txt 2 > out/obex/obex_agent.c
+# ./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-agent-api.txt 2 > out/obex_agent.c
 
 # obex-api.txt
 echo "obex-api.txt"
 echo "Generating obex client header"
-./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 1 > out/obex/obex_client.h
+./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 1 > out/obex_client.h
 echo "Generating obex client source"
-./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 1 > out/obex/obex_client.c
+./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 1 > out/obex_client.c
 
 echo "Generating obex session header"
-./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 2 > out/obex/obex_session.h
+./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 2 > out/obex_session.h
 echo "Generating obex session source"
-./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 2 > out/obex/obex_session.c
+./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 2 > out/obex_session.c
 
 echo "Generating obex transfer header"
-./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 3 > out/obex/obex_transfer.h
+./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 3 > out/obex_transfer.h
 echo "Generating obex transfer source"
-./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 3 > out/obex/obex_transfer.c
+./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 3 > out/obex_transfer.c
 
 echo "Generating obex object push header"
-./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 4 > out/obex/obex_object_push.h
+./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 4 > out/obex_object_push.h
 echo "Generating obex object push source"
-./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 4 > out/obex/obex_object_push.c
+./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 4 > out/obex_object_push.c
 
 echo "Generating obex file transfer header"
-./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 5 > out/obex/obex_file_transfer.h
+./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 5 > out/obex_file_transfer.h
 echo "Generating obex file transfer source"
-./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 5 > out/obex/obex_file_transfer.c
+./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 5 > out/obex_file_transfer.c
 
 echo "Generating obex phonebook access header"
-./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 6 > out/obex/obex_phonebook_access.h
+./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 6 > out/obex_phonebook_access.h
 echo "Generating obex phonebook access source"
-./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 6 > out/obex/obex_phonebook_access.c
+./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 6 > out/obex_phonebook_access.c
 
 echo "Generating obex synchronization header"
-./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 7 > out/obex/obex_synchronization.h
+./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 7 > out/obex_synchronization.h
 echo "Generating obex synchronization source"
-./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 7 > out/obex/obex_synchronization.c
+./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 7 > out/obex_synchronization.c
 
-echo "Generating obex message access header"
-./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 8 > out/obex/obex_message_access.h
-echo "Generating obex message access source"
-./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 8 > out/obex/obex_message_access.c
+# echo "Generating obex message access header"
+# ./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 8 > out/obex_message_access.h
+# echo "Generating obex message access source"
+# ./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 8 > out/obex_message_access.c
 
 echo "Generating obex message header"
-./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 9 > out/obex/obex_message.h
+./gen-dbus-gobject.pl -header bluez-api-${API_VERSION}/obex-api.txt 9 > out/obex_message.h
 echo "Generating obex message source"
-./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 9 > out/obex/obex_message.c
+./gen-dbus-gobject.pl -source bluez-api-${API_VERSION}/obex-api.txt 9 > out/obex_message.c
 
 # profile-api.txt
 echo "profile-api.txt"

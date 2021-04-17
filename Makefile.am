@@ -8,6 +8,6 @@ dist-hook:
 
 CLEANFILES = $(top_srcdir)/.version
 
-SUBDIRS = src
+SUBDIRS = contrib/bluez-api-5.20-fixed src
 
 EXTRA_DIST = git-version-gen

@@ -288,6 +288,7 @@ static void create_paired_device_done(gpointer data)
     g_main_loop_quit(mainloop);
 }
 
+/* HACK async functionality isn't actually generated
 static void _bt_device_pair_callback(GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
     g_assert(user_data != NULL);
@@ -299,7 +300,7 @@ static void _bt_device_pair_callback(GObject *source_object, GAsyncResult *res, 
     GMainLoop *mainloop = (GMainLoop *) g_hash_table_lookup(dict, "mainloop");
     g_main_loop_quit(mainloop);
 }
-
+*/
 
 
 static GHashTable *_bt_device_sdp_browse(const gchar *device_path, const gchar *pattern)
@@ -559,8 +560,11 @@ int main(int argc, char *argv[])
         g_hash_table_insert(user_data_hash, "device", device);
         g_hash_table_insert(user_data_hash, "mainloop", mainloop);
         
-        device_pair_async(device, (GAsyncReadyCallback) _bt_device_pair_callback, (gpointer) user_data_hash);
-        g_main_loop_run(mainloop);
+	device_pair(device, &error);
+	exit_if_error(error);
+        // HACK async is not generated device_pair(device, (GAsyncReadyCallback) _bt_device_pair_callback, (gpointer) user_data_hash);
+	// HACK async is not generated _bt_device_pair_callback(user_data_hash);
+        // HACK async is not generated g_main_loop_run(mainloop);
         
         g_print("Done\n");
         g_hash_table_unref(user_data_hash);

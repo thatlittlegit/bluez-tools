@@ -31,6 +31,8 @@ fi
 
 AC_PROG_INSTALL
 AM_PROG_CC_C_O
+AC_PROG_RANLIB
+AM_PROG_AR
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -58,5 +60,8 @@ LIBREADLINE="-lreadline"
 
 AC_SUBST(LIBREADLINE)
 
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CHECK_PROG(PERL, [perl], [perl])
+AS_IF([test -z x"$PERL"], [AC_MSG_ERROR([Perl is required to build bluez-tools.])])
+
+AC_CONFIG_FILES([Makefile src/Makefile contrib/bluez-api-5.20-fixed/Makefile])
 AC_OUTPUT

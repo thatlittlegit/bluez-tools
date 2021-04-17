@@ -33,9 +33,9 @@
 #include "dbus-common.h"
 #include "helpers.h"
 #include "properties.h"
+#include "bluez-api.h"
 
 #include "obex_agent.h"
-#include "bluez/obex/obex_transfer.h"
 
 #define OBEX_AGENT_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE((obj), OBEX_AGENT_TYPE, ObexAgentPrivate))
 

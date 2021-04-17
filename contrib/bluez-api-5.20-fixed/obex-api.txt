@@ -166,7 +166,7 @@ Service		org.bluez.obex
 Interface	org.bluez.obex.ObjectPush1
 Object path	[Session object path]
 
-Methods		object, dict SendFile(string sourcefile)
+Methods		object,dict SendFile(string sourcefile)
 
 			Send one local file to the remote device.
 
@@ -180,7 +180,7 @@ Methods		object, dict SendFile(string sourcefile)
 			Possible errors: org.bluez.obex.Error.InvalidArguments
 					 org.bluez.obex.Error.Failed
 
-		object, dict PullBusinessCard(string targetfile)
+		object,dict PullBusinessCard(string targetfile)
 
 			Request the business card from a remote device and
 			store it in the local file.
@@ -198,7 +198,7 @@ Methods		object, dict SendFile(string sourcefile)
 			Possible errors: org.bluez.obex.Error.InvalidArguments
 					 org.bluez.obex.Error.Failed
 
-		object, dict ExchangeBusinessCards(string clientfile,
+		object,dict ExchangeBusinessCards(string clientfile,
 							string targetfile)
 
 			Push the client's business card to the remote device
@@ -259,7 +259,7 @@ Methods		void ChangeFolder(string folder)
 
 			Possible errors: org.bluez.obex.Error.Failed
 
-		object, dict GetFile(string targetfile, string sourcefile)
+		object,dict GetFile(string targetfile, string sourcefile)
 
 			Copy the source file (from remote device) to the
 			target file (on local filesystem).
@@ -277,7 +277,7 @@ Methods		void ChangeFolder(string folder)
 			Possible errors: org.bluez.obex.Error.InvalidArguments
 					 org.bluez.obex.Error.Failed
 
-		object, dict PutFile(string sourcefile, string targetfile)
+		object,dict PutFile(string sourcefile, string targetfile)
 
 			Copy the source file (from local filesystem) to the
 			target file (on remote device).
@@ -345,7 +345,7 @@ Methods		void Select(string location, string phonebook)
 			Possible errors: org.bluez.obex.Error.InvalidArguments
 					 org.bluez.obex.Error.Failed
 
-		object, dict PullAll(string targetfile, dict filters)
+		object,dict PullAll(string targetfile, dict filters)
 
 			Return the entire phonebook object from the PSE server
 			in plain string with vcard format, and store it in
@@ -379,7 +379,7 @@ Methods		void Select(string location, string phonebook)
 			Possible errors: org.bluez.obex.Error.InvalidArguments
 					 org.bluez.obex.Forbidden
 
-		object, dict
+		object,dict
 		Pull(string vcard, string targetfile, dict filters)
 
 			Given a vcard handle, retrieve the vcard in the current
@@ -488,7 +488,7 @@ Methods		void SetLocation(string location)
 
 			Possible errors: org.bluez.obex.Error.InvalidArguments
 
-		object, dict GetPhonebook(string targetfile)
+		object,dict GetPhonebook(string targetfile)
 
 			Retrieve an entire Phonebook Object store from remote
 			device, and stores it in a local file.
@@ -506,7 +506,7 @@ Methods		void SetLocation(string location)
 			Possible errors: org.bluez.obex.Error.InvalidArguments
 					 org.bluez.obex.Error.Failed
 
-		object, dict PutPhonebook(string sourcefile)
+		object,dict PutPhonebook(string sourcefile)
 
 			Send an entire Phonebook Object store to remote device.
 
@@ -557,7 +557,7 @@ Methods		void SetFolder(string name)
 
 			Possible errors: None
 
-		array{object, dict} ListMessages(string folder, dict filter)
+		array{object,dict} ListMessages(string folder, dict filter)
 
 			Returns an array containing the messages found in the
 			given subfolder of the current folder, or in the
@@ -658,7 +658,7 @@ Methods		void SetFolder(string name)
 
 			Possible errors: org.bluez.obex.Error.Failed
 
-		object, dict
+		object,dict
 		PushMessage(string sourcefile, string folder, dict args)
 
 			Transfer a message (in bMessage format) to the
@@ -746,7 +746,7 @@ Service		org.bluez.obex
 Interface	org.bluez.obex.Message1
 Object path	[Session object path]/{message0,...}
 
-Methods		object, dict Get(string targetfile, boolean attachment)
+Methods		object,dict Get(string targetfile, boolean attachment)
 
 			Download message and store it in the target file.
 

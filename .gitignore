@@ -27,3 +27,9 @@ src/bt-serial
 stamp-h1
 test_*
 tmp/
+contrib/bluez-api-5.20-fixed/*.c
+contrib/bluez-api-5.20-fixed/*.h
+contrib/out
+ar-lib
+*.stamp
+*.a
