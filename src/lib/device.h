@@ -29,25 +29,15 @@ extern "C" {
 #endif
 
 #include <glib-object.h>
+#include <gio/gio.h>
 
 #define BZT_DEVICE_DBUS_SERVICE "org.bluez"
 #define BZT_DEVICE_DBUS_INTERFACE "org.bluez.Device1"
 
-
-G_DECLARE_FINAL_TYPE(BztDevice, bzt_device, BZT, DEVICE, GObject)
+G_DECLARE_FINAL_TYPE(BztDevice, bzt_device, BZT, DEVICE, GDBusProxy)
 struct dummy;
 
 #define BZT_TYPE_DEVICE bzt_device_get_type()
-
-/*
- * Constructor
- */
-BztDevice *bzt_device_new(const gchar *dbus_object_path);
-
-/*
- * Method definitions
- */
-const gchar *bzt_device_get_dbus_object_path(BztDevice *self);
 
 void bzt_device_cancel_pairing(BztDevice *self, GError **error);
 void bzt_device_connect(BztDevice *self, GError **error);

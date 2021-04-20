@@ -25,21 +25,17 @@
 #define __BZT_ADAPTER_H
 
 #include <glib-object.h>
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
 #define BZT_ADAPTER_DBUS_SERVICE "org.bluez"
 #define BZT_ADAPTER_DBUS_INTERFACE "org.bluez.Adapter1"
 
-
-G_DECLARE_FINAL_TYPE(BztAdapter, bzt_adapter, BZT, ADAPTER, GObject)
+G_DECLARE_FINAL_TYPE(BztAdapter, bzt_adapter, BZT, ADAPTER, GDBusProxy)
 struct dummy;
 
 #define BZT_TYPE_ADAPTER bzt_adapter_get_type()
-
-BztAdapter *bzt_adapter_new(const gchar *dbus_object_path);
-
-const gchar *bzt_adapter_get_dbus_object_path(BztAdapter *self);
 
 void bzt_adapter_remove_device(BztAdapter *self, const gchar *device, GError **error);
 void bzt_adapter_start_discovery(BztAdapter *self, GError **error);

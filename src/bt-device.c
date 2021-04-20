@@ -500,7 +500,7 @@ int main(int argc, char *argv[])
     }
 
     /* Check, that bluetooth daemon is running */
-    if (!intf_supported(BLUEZ_DBUS_SERVICE_NAME, MANAGER_DBUS_PATH, MANAGER_DBUS_INTERFACE))
+    if (!intf_supported(BLUEZ_DBUS_SERVICE_NAME, BZT_MANAGER_DBUS_PATH, BZT_MANAGER_DBUS_INTERFACE))
     {
         g_printerr("%s: bluez service is not found\n", g_get_prgname());
         g_printerr("Did you forget to run bluetoothd?\n");
@@ -514,7 +514,7 @@ int main(int argc, char *argv[])
 
     if (list_arg)
     {
-        const gchar **devices_list = bzt_manager_get_devices(manager, bzt_adapter_get_dbus_object_path(adapter));
+        GList *devices_list = bzt_manager_get_devices(manager, g_dbus_proxy_get_object_path(G_DBUS_OBJECT(adapter)));
 
         if (devices_list == NULL)
         {
@@ -523,15 +523,16 @@ int main(int argc, char *argv[])
         }
 
         g_print("Added devices:\n");
-        const gchar **devices = NULL;
-        for (devices = devices_list; *devices != NULL; devices++)
+        GList *current = devices_list;
+        do
         {
-            const gchar *device_path = *devices;
-            BztDevice *device = bzt_device_new(device_path);
+            BztDevice *device = BZT_DEVICE(current->data);
+
             g_print("%s (%s)\n", bzt_device_get_alias(device, &error), bzt_device_get_address(device, &error));
             exit_if_error(error);
-            g_object_unref(device);
-        }
+        } while ((current = current->next));
+
+	g_list_free_full(devices_list, g_object_unref);
     }
     else if (connect_arg)
     {
@@ -599,7 +600,7 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
         
-        bzt_adapter_remove_device(adapter, bzt_device_get_dbus_object_path(device), &error);
+        bzt_adapter_remove_device(adapter, g_dbus_proxy_get_object_path(G_DBUS_PROXY(device)), &error);
         exit_if_error(error);
 
         g_print("Done\n");

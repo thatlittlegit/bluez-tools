@@ -43,7 +43,7 @@ static GMainLoop *_mainloop = NULL;
 
 static void _bt_agent_g_destroy_notify(gpointer data);
 static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar *sender, const gchar *object_path, const gchar *interface_name, const gchar *method_name, GVariant *parameters, GDBusMethodInvocation *invocation, gpointer user_data);
-static const gchar *_find_device_pin(const gchar *device_path);
+static const gchar *_find_device_pin(BztDevice *device);
 
 static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar *sender, const gchar *object_path, const gchar *interface_name, const gchar *method_name, GVariant *parameters, GDBusMethodInvocation *invocation, gpointer user_data)
 {
@@ -52,7 +52,17 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
     if (g_strcmp0(method_name, "AuthorizeService") == 0)
     {
         GError *error = NULL;
-        BztDevice *device_obj = bzt_device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        BztManager *manager = bzt_manager_new(NULL, &error);
+        if (error)
+        {
+	    g_critical("Failed to create a Bluetooth manager: %s", error->message);
+            g_error_free(error);
+            g_dbus_method_invocation_return_dbus_error(invocation, "org.bluez.Error.Rejected", "Internal error occurred");
+            return;
+        }
+
+        GDBusObject *device_dbus_obj = g_dbus_object_manager_get_object(G_DBUS_OBJECT_MANAGER(manager), g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        BztDevice *device_obj = BZT_DEVICE(g_dbus_object_get_interface(device_dbus_obj, BZT_DEVICE_DBUS_INTERFACE));
         const char *uuid = g_variant_get_string(g_variant_get_child_value(parameters, 1), NULL);
 
         if (_interactive)
@@ -90,8 +100,19 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
     else if (g_strcmp0(method_name, "DisplayPasskey") == 0)
     {
         GError *error = NULL;
-        BztDevice *device_obj = bzt_device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
-        const gchar *pin = _find_device_pin(bzt_device_get_dbus_object_path(device_obj));
+        BztManager *manager = bzt_manager_new(NULL, &error);
+        if (error)
+        {
+	    g_critical("Failed to create a Bluetooth manager: %s", error->message);
+            g_error_free(error);
+            g_dbus_method_invocation_return_dbus_error(invocation, "org.bluez.Error.Rejected", "Internal error occurred");
+            return;
+        }
+
+        GDBusObject *device_dbus_obj = g_dbus_object_manager_get_object(G_DBUS_OBJECT_MANAGER(manager), g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        BztDevice *device_obj = BZT_DEVICE(g_dbus_object_get_interface(device_dbus_obj, BZT_DEVICE_DBUS_INTERFACE));
+
+        const gchar *pin = _find_device_pin(device_obj);
 
         if (_interactive)
             g_print("Device: %s (%s)\n", bzt_device_get_alias(device_obj, &error), bzt_device_get_address(device_obj, &error));
@@ -122,8 +143,19 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
     else if (g_strcmp0(method_name, "DisplayPinCode") == 0)
     {
         GError *error = NULL;
-        BztDevice *device_obj = bzt_device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
-        const gchar *pin = _find_device_pin(bzt_device_get_dbus_object_path(device_obj));
+        BztManager *manager = bzt_manager_new(NULL, &error);
+        if (error)
+        {
+	    g_critical("Failed to create a Bluetooth manager: %s", error->message);
+            g_error_free(error);
+            g_dbus_method_invocation_return_dbus_error(invocation, "org.bluez.Error.Rejected", "Internal error occurred");
+            return;
+        }
+
+        GDBusObject *device_dbus_obj = g_dbus_object_manager_get_object(G_DBUS_OBJECT_MANAGER(manager), g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        BztDevice *device_obj = BZT_DEVICE(g_dbus_object_get_interface(device_dbus_obj, BZT_DEVICE_DBUS_INTERFACE));
+
+        const gchar *pin = _find_device_pin(device_obj);
         const gchar *pincode = g_variant_get_string(g_variant_get_child_value(parameters, 1), NULL);
 
         if (_interactive)
@@ -184,7 +216,17 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
     else if (g_strcmp0(method_name, "RequestAuthorization") == 0)
     {
         GError *error = NULL;
-        BztDevice *device_obj = bzt_device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        BztManager *manager = bzt_manager_new(NULL, &error);
+        if (error)
+        {
+	    g_critical("Failed to create a Bluetooth manager: %s", error->message);
+            g_error_free(error);
+            g_dbus_method_invocation_return_dbus_error(invocation, "org.bluez.Error.Rejected", "Internal error occurred");
+            return;
+        }
+
+        GDBusObject *device_dbus_obj = g_dbus_object_manager_get_object(G_DBUS_OBJECT_MANAGER(manager), g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        BztDevice *device_obj = BZT_DEVICE(g_dbus_object_get_interface(device_dbus_obj, BZT_DEVICE_DBUS_INTERFACE));
 
         if (_interactive)
             g_print("Device: %s (%s)\n", bzt_device_get_alias(device_obj, &error), bzt_device_get_address(device_obj, &error));
@@ -216,9 +258,20 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
     else if (g_strcmp0(method_name, "RequestConfirmation") == 0)
     {
         GError *error = NULL;
-        BztDevice *device_obj = bzt_device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        BztManager *manager = bzt_manager_new(NULL, &error);
+        if (error)
+        {
+	    g_critical("Failed to create a Bluetooth manager: %s", error->message);
+            g_error_free(error);
+            g_dbus_method_invocation_return_dbus_error(invocation, "org.bluez.Error.Rejected", "Internal error occurred");
+            return;
+        }
+
+        GDBusObject *device_dbus_obj = g_dbus_object_manager_get_object(G_DBUS_OBJECT_MANAGER(manager), g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        BztDevice *device_obj = BZT_DEVICE(g_dbus_object_get_interface(device_dbus_obj, BZT_DEVICE_DBUS_INTERFACE));
+
         guint32 passkey = g_variant_get_uint32(g_variant_get_child_value(parameters, 1));
-        const gchar *pin = _find_device_pin(bzt_device_get_dbus_object_path(device_obj));
+        const gchar *pin = _find_device_pin(device_obj);
 
         if (_interactive)
             g_print("Device: %s (%s)\n", bzt_device_get_alias(device_obj, &error), bzt_device_get_address(device_obj, &error));
@@ -267,8 +320,20 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
     else if (g_strcmp0(method_name, "RequestPasskey") == 0)
     {
         GError *error = NULL;
-        BztDevice *device_obj = bzt_device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
-        const gchar *pin = _find_device_pin(bzt_device_get_dbus_object_path(device_obj));
+        BztManager *manager = bzt_manager_new(NULL, &error);
+        if (error)
+        {
+	    g_critical("Failed to create a Bluetooth manager: %s", error->message);
+            g_error_free(error);
+            g_dbus_method_invocation_return_dbus_error(invocation, "org.bluez.Error.Rejected", "Internal error occurred");
+            return;
+        }
+
+        GDBusObject *device_dbus_obj = g_dbus_object_manager_get_object(G_DBUS_OBJECT_MANAGER(manager), g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        BztDevice *device_obj = BZT_DEVICE(g_dbus_object_get_interface(device_dbus_obj, BZT_DEVICE_DBUS_INTERFACE));
+
+        const gchar *pin = _find_device_pin(device_obj);
+
         guint32 ret = 0;
         gboolean invoke = FALSE;
 
@@ -312,8 +377,19 @@ static void _bt_agent_method_call_func(GDBusConnection *connection, const gchar 
     else if (g_strcmp0(method_name, "RequestPinCode") == 0)
     {
         GError *error = NULL;
-        BztDevice *device_obj = bzt_device_new(g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
-        const gchar *pin = _find_device_pin(bzt_device_get_dbus_object_path(device_obj));
+        BztManager *manager = bzt_manager_new(NULL, &error);
+        if (error)
+        {
+	    g_critical("Failed to create a Bluetooth manager: %s", error->message);
+            g_error_free(error);
+            g_dbus_method_invocation_return_dbus_error(invocation, "org.bluez.Error.Rejected", "Internal error occurred");
+            return;
+        }
+
+        GDBusObject *device_dbus_obj = g_dbus_object_manager_get_object(G_DBUS_OBJECT_MANAGER(manager), g_variant_get_string(g_variant_get_child_value(parameters, 0), NULL));
+        BztDevice *device_obj = BZT_DEVICE(g_dbus_object_get_interface(device_dbus_obj, BZT_DEVICE_DBUS_INTERFACE));
+
+        const gchar *pin = _find_device_pin(device_obj);
         gchar *ret = NULL;
         gboolean invoke = FALSE;
 
@@ -364,12 +440,12 @@ static void _bt_agent_g_destroy_notify(gpointer data)
     g_free(data);
 }
 
-static const gchar *_find_device_pin(const gchar *device_path)
+static const gchar *_find_device_pin(BztDevice *device)
 {
     if (_pin_hash_table)
     {
         GError *error = NULL;
-        BztDevice *device = bzt_device_new(device_path);
+
         const gchar *pin_by_addr = g_hash_table_lookup(_pin_hash_table, bzt_device_get_address(device, &error));
         const gchar *pin_by_alias = g_hash_table_lookup(_pin_hash_table, bzt_device_get_alias(device, &error));
         if(error)
@@ -377,7 +453,7 @@ static const gchar *_find_device_pin(const gchar *device_path)
             g_critical("Failed to get remote device's MAC address: %s", error->message);
             g_error_free(error);
         }
-        g_object_unref(device);
+
         const gchar *pin_all = g_hash_table_lookup(_pin_hash_table, "*");
         if (pin_by_addr)
             return pin_by_addr;

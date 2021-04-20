@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
     }
 
     /* Check, that bluetooth daemon is running */
-    if (!intf_supported(BLUEZ_DBUS_SERVICE_NAME, MANAGER_DBUS_PATH, MANAGER_DBUS_INTERFACE))
+    if (!intf_supported(BLUEZ_DBUS_SERVICE_NAME, BZT_MANAGER_DBUS_PATH, BZT_MANAGER_DBUS_INTERFACE))
     {
         g_printerr("%s: bluez service is not found\n", g_get_prgname());
         g_printerr("Did you forget to run bluetoothd?\n");
@@ -158,30 +158,29 @@ int main(int argc, char *argv[])
 
     if (list_arg)
     {
-        const GPtrArray *adapters_list = bzt_manager_get_adapters(manager);
-        g_assert(adapters_list != NULL);
-
-        if (adapters_list->len == 0)
+        GList *adapters_list = bzt_manager_get_adapters(manager);
+        if (adapters_list == NULL)
         {
             g_print("No adapters found\n");
             exit(EXIT_FAILURE);
         }
 
         g_print("Available adapters:\n");
-        for (int i = 0; i < adapters_list->len; i++)
+        GList *current = adapters_list;
+        do
         {
-            const gchar *adapter_path = g_ptr_array_index(adapters_list, i);
-            BztAdapter *adapter = bzt_adapter_new(adapter_path);
+            BztAdapter *adapter = BZT_ADAPTER(current->data);
             g_print("%s (%s)\n", bzt_adapter_get_name(adapter, &error), bzt_adapter_get_address(adapter, &error));
-            g_object_unref(adapter);
-        }
+        } while ((current = current->next));
+
+        g_list_free_full(adapters_list, g_object_unref);
     }
     else if (info_arg)
     {
         BztAdapter *adapter = find_adapter(adapter_arg, &error);
         exit_if_error(error);
 
-        gchar *adapter_intf = g_path_get_basename(bzt_adapter_get_dbus_object_path(adapter));
+        gchar *adapter_intf = g_path_get_basename(g_dbus_object_get_object_path(G_DBUS_OBJECT(adapter)));
         g_print("[%s]\n", adapter_intf);
         g_print("  Name: %s\n", bzt_adapter_get_name(adapter, &error));
         g_print("  Address: %s\n", bzt_adapter_get_address(adapter, &error));
@@ -216,9 +215,9 @@ int main(int argc, char *argv[])
         // Mainloop
         GMainLoop *mainloop = g_main_loop_new(NULL, FALSE);
 
-        guint object_sig_sub_id = g_dbus_connection_signal_subscribe(system_conn, "org.bluez", "org.freedesktop.DBus.ObjectManager", "InterfacesAdded", NULL, NULL, G_DBUS_SIGNAL_FLAGS_NONE, _manager_device_found, (gpointer) bzt_adapter_get_dbus_object_path(adapter), NULL);
+        guint object_sig_sub_id = g_dbus_connection_signal_subscribe(system_conn, "org.bluez", "org.freedesktop.DBus.ObjectManager", "InterfacesAdded", NULL, NULL, G_DBUS_SIGNAL_FLAGS_NONE, _manager_device_found, (gpointer) g_dbus_object_get_object_path(G_DBUS_OBJECT(adapter)), NULL);
         exit_if_error(error);
-        guint prop_sig_sub_id = g_dbus_connection_signal_subscribe(system_conn, "org.bluez", "org.freedesktop.DBus.Properties", "PropertiesChanged", bzt_adapter_get_dbus_object_path(adapter), NULL, G_DBUS_SIGNAL_FLAGS_NONE, _adapter_property_changed, mainloop, NULL);
+        guint prop_sig_sub_id = g_dbus_connection_signal_subscribe(system_conn, "org.bluez", "org.freedesktop.DBus.Properties", "PropertiesChanged", g_dbus_object_get_object_path(G_DBUS_OBJECT(adapter)), NULL, G_DBUS_SIGNAL_FLAGS_NONE, _adapter_property_changed, mainloop, NULL);
         exit_if_error(error);
         
         g_print("Searching...\n");

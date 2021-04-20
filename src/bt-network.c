@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Check, that bluetooth daemon is running */
-	if (!intf_supported(BLUEZ_DBUS_SERVICE_NAME, MANAGER_DBUS_PATH, MANAGER_DBUS_INTERFACE)) {
+	if (!intf_supported(BLUEZ_DBUS_SERVICE_NAME, BZT_MANAGER_DBUS_PATH, BZT_MANAGER_DBUS_INTERFACE)) {
 		g_printerr("%s: bluez service is not found\n", g_get_prgname());
 		g_printerr("Did you forget to run bluetoothd?\n");
 		exit(EXIT_FAILURE);
@@ -169,14 +169,14 @@ int main(int argc, char *argv[])
 		BztDevice *device = find_device(adapter, connect_device_arg, &error);
 		exit_if_error(error);
 
-		if (!intf_supported(BLUEZ_DBUS_SERVICE_NAME, bzt_device_get_dbus_object_path(device), BZT_NETWORK_DBUS_INTERFACE)) {
+		if (!intf_supported(BLUEZ_DBUS_SERVICE_NAME, g_dbus_proxy_get_object_path(G_DBUS_PROXY(device)), BZT_NETWORK_DBUS_INTERFACE)) {
 			g_printerr("Network service is not supported by this device\n");
 			exit(EXIT_FAILURE);
 		}
 
 		mainloop = g_main_loop_new(NULL, FALSE);
 
-                BztNetwork *network = bzt_network_new(bzt_device_get_dbus_object_path(device));
+                BztNetwork *network = bzt_network_new(g_dbus_proxy_get_object_path(G_DBUS_PROXY(device)));
                 guint prop_sig_sub_id = g_dbus_connection_signal_subscribe(system_conn, "org.bluez", "org.freedesktop.DBus.Properties", "PropertiesChanged", bzt_network_get_dbus_object_path(network), NULL, G_DBUS_SIGNAL_FLAGS_NONE, _bt_network_property_changed, mainloop, NULL);
 
 		if (bzt_network_get_connected(network, NULL) == TRUE) {
@@ -208,14 +208,14 @@ int main(int argc, char *argv[])
 			exit(EXIT_FAILURE);
 		}
 
-		if (!intf_supported(BLUEZ_DBUS_SERVICE_NAME, bzt_adapter_get_dbus_object_path(adapter), BZT_NETWORK_SERVER_DBUS_INTERFACE)) {
+		if (!intf_supported(BLUEZ_DBUS_SERVICE_NAME, g_dbus_object_get_object_path(G_DBUS_OBJECT(adapter)), BZT_NETWORK_SERVER_DBUS_INTERFACE)) {
 			g_printerr("Network server is not supported by this adapter\n");
 			exit(EXIT_FAILURE);
 		}
 
 		gchar *server_uuid_upper = g_ascii_strup(server_uuid_arg, -1);
 
-                BztNetworkServer *network_server = bzt_network_server_new(bzt_adapter_get_dbus_object_path(adapter));
+                BztNetworkServer *network_server = bzt_network_server_new(g_dbus_object_get_object_path(G_DBUS_OBJECT(adapter)));
 		bzt_network_server_register(network_server, server_uuid_arg, server_brige_arg, &error);
 		exit_if_error(error);
 		g_print("%s server registered\n", server_uuid_upper);

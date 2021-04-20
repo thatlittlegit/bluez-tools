@@ -154,53 +154,45 @@ int xtoi(const gchar *str)
 
 BztAdapter *find_adapter(const gchar *name, GError **error)
 {
-    gchar *adapter_path = NULL;
-    BztAdapter *adapter = NULL;
-
     BztManager *manager = bzt_manager_new(NULL, error);
     if (manager == NULL)
 	return NULL;
 
     // Try to find by id
-    adapter_path = (gchar *) bzt_manager_find_adapter(manager, name, error);
+    BztAdapter *adapter = bzt_manager_find_adapter(manager, name, error);
 
     // Found
-    if (adapter_path)
+    if (adapter)
     {
-        // adapter = g_object_new(ADAPTER_TYPE, "DBusObjectPath", adapter_path, NULL);
-        adapter = bzt_adapter_new(adapter_path);
+        g_object_unref(manager);
+        return adapter;
     }
     else
     {
         // Try to find by name
-        GPtrArray *adapters_list = bzt_manager_get_adapters(manager);
+        GList *adapters_list = bzt_manager_get_adapters(manager);
         g_assert(adapters_list != NULL);
-        for (int i = 0; i < adapters_list->len; i++)
-        {
-            adapter_path = g_ptr_array_index(adapters_list, i);
-            // adapter = g_object_new(ADAPTER_TYPE, "DBusObjectPath", adapter_path, NULL);
-            adapter = bzt_adapter_new(adapter_path);
-            adapter_path = NULL;
 
-            if (g_strcmp0(name, bzt_adapter_get_name(adapter, error)) == 0)
+        GList *current = adapters_list;
+        do
+        {
+            if (g_strcmp0(name, bzt_adapter_get_name(BZT_ADAPTER(current->data), error)) == 0)
             {
                 if (*error)
                 {
                     g_error_free(*error);
                     *error = NULL;
                 }
+
+                adapter = g_object_ref(current->data);
                 break;
             }
+        } while ((current = current->next));
 
-            g_object_unref(adapter);
-            adapter = NULL;
-        }
-        g_ptr_array_unref(adapters_list);
+        g_list_free_full(adapters_list, g_object_unref);
     }
 
     g_object_unref(manager);
-    if (adapter_path) g_free(adapter_path);
-
     return adapter;
 }
 
@@ -215,8 +207,8 @@ BztDevice *find_device(BztAdapter *adapter, const gchar *name, GError **error)
     if (manager == NULL)
 	return NULL;
     
-    GVariant *objects = bzt_manager_get_managed_objects(manager, error);
-    
+    GList *objects = bzt_manager_get_devices(manager, g_dbus_proxy_get_object_path(G_DBUS_PROXY(adapter)));
+
     g_clear_object(&manager);
     
     if(!objects)
@@ -224,21 +216,30 @@ BztDevice *find_device(BztAdapter *adapter, const gchar *name, GError **error)
         return NULL;
     }
     
-    const gchar *object_path;
-    GVariant *ifaces_and_properties;
-    GVariantIter i;
-
-    g_variant_iter_init(&i, objects);
-    while (g_variant_iter_next(&i, "{&o@a{sa{sv}}}", &object_path, &ifaces_and_properties) && device == NULL)
+    do
     {
-        GVariant *properties = NULL;
-        
-        if(g_variant_lookup(ifaces_and_properties, BZT_DEVICE_DBUS_INTERFACE, "@a{sv}", &properties))
+        BztDevice *current = BZT_DEVICE(objects->data);
+
+        GVariant *properties = bzt_device_get_properties(current, error);
+        if (properties == NULL)
+            return NULL;
+/*
+        const gchar *adapter_path = bzt_device_get_adapter(current, error);
+        if (adapter_path == NULL)
+            return NULL;
+
+        if (g_strcmp0(adapter_path, g_dbus_proxy_get_object_path(G_DBUS_PROXY(adapter))) != 0)
+            return NULL;
+
+        // Try to find by MAC
+        const gchar *address = bzt_device_get_address(current, error);
+        */
+        if(1) /* don't want to reindent right now */
         {
             gchar *adapter_path = NULL;
             if(g_variant_lookup(properties, "Adapter", "o", &adapter_path))
             {
-                if(g_strcmp0(adapter_path, bzt_adapter_get_dbus_object_path(adapter)) == 0)
+                if(g_strcmp0(adapter_path, g_dbus_proxy_get_object_path(G_DBUS_PROXY(adapter))) == 0)
                 {
                     // Now check if this is the device we are looking for.
                     
@@ -249,7 +250,7 @@ BztDevice *find_device(BztAdapter *adapter, const gchar *name, GError **error)
                     {
                         if(name && address && g_ascii_strcasecmp(address, name) == 0)
                         {
-                            device = bzt_device_new(object_path);
+                            device = g_object_ref(current);
                         }
                         g_free(address);
                     }
@@ -263,7 +264,7 @@ BztDevice *find_device(BztAdapter *adapter, const gchar *name, GError **error)
                         g_variant_lookup(properties, "Alias", "s", &device_alias);
                         
                         if (g_strcmp0(name, device_name) == 0 || g_strcmp0(name, device_alias) == 0) {
-                            device = bzt_device_new(object_path);
+                            device = g_object_ref(current);
                         }
                         
                         g_free(device_alias);
@@ -272,11 +273,10 @@ BztDevice *find_device(BztAdapter *adapter, const gchar *name, GError **error)
                 }
                 g_free(adapter_path);
             }
-            g_variant_unref(properties);
         }
-        g_variant_unref(ifaces_and_properties);
-    }
-    g_variant_unref(objects);
+        g_variant_unref(properties);
+    } while ((objects = objects->next));
+    g_list_free_full(objects, g_object_unref);
     
     return device;
 }

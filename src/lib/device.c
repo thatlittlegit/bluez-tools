@@ -28,41 +28,36 @@
 #include <glib.h>
 #include <string.h>
 
-#include "../../src/lib/dbus-common.h"
-#include "../../src/lib/properties.h"
+#include "dbus-common.h"
+#include "properties.h"
 
 #include "device.h"
 
 struct _BztDevice {
-	GObject parent;
-	GDBusProxy *proxy;
+	GDBusProxy parent;
+
 	Properties *properties;
-	gchar *object_path;
 };
 
-G_DEFINE_TYPE(BztDevice, bzt_device, G_TYPE_OBJECT);
+static void _bzt_device_init_initable(GInitableIface *iface);
+
+G_DEFINE_TYPE_WITH_CODE(BztDevice, bzt_device, G_TYPE_DBUS_PROXY,
+	G_IMPLEMENT_INTERFACE(G_TYPE_INITABLE, _bzt_device_init_initable) struct dummy;);
 
 enum {
 	PROP_0,
-	PROP_DBUS_OBJECT_PATH /* readwrite, construct only */
 };
 
 static void _bzt_device_get_property(GObject *object, guint property_id, GValue *value, GParamSpec *pspec);
 static void _bzt_device_set_property(GObject *object, guint property_id, const GValue *value, GParamSpec *pspec);
-
-static void _bzt_device_create_gdbus_proxy(BztDevice *self, const gchar *dbus_service_name, const gchar *dbus_object_path, GError **error);
+static gboolean _bzt_device_real_init(GInitable *initable, GCancellable *cancel, GError **error);
 
 static void bzt_device_dispose(GObject *gobject)
 {
 	BztDevice *self = BZT_DEVICE(gobject);
 
-	/* Proxy free */
-	g_clear_object (&self->proxy);
-	/* Properties free */
 	g_clear_object(&self->properties);
-	/* Object path free */
-	g_free(self->object_path);
-	/* Chain up to the parent class */
+
 	G_OBJECT_CLASS(bzt_device_parent_class)->dispose(gobject);
 }
 
@@ -78,24 +73,32 @@ static void bzt_device_class_init(BztDeviceClass *klass)
 
 	gobject_class->dispose = bzt_device_dispose;
 
-	/* Properties registration */
-	GParamSpec *pspec = NULL;
-
 	gobject_class->get_property = _bzt_device_get_property;
 	gobject_class->set_property = _bzt_device_set_property;
-	
-	/* object DBusObjectPath [readwrite, construct only] */
-	pspec = g_param_spec_string("DBusObjectPath", "dbus_object_path", "BztDevice D-Bus object path", NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
-	g_object_class_install_property(gobject_class, PROP_DBUS_OBJECT_PATH, pspec);
-	if (pspec)
-		g_param_spec_unref(pspec);
+}
+
+static void _bzt_device_init_initable(GInitableIface *iface)
+{
+	iface->init = _bzt_device_real_init;
 }
 
 static void bzt_device_init(BztDevice *self)
 {
-	/* filler */
-	/* filler */
-	g_assert(system_conn != NULL);
+}
+
+static gboolean _bzt_device_real_init(GInitable *initable, GCancellable *cancel, GError **error)
+{
+	/* TODO currently, we just assert, but it might be a good idea to give
+	 * out GErrors properly so the user doesn't see 'Assertion failed:
+	 * (G_DBUS_PROXY(self))' or similar
+	 *
+	 * This isn't a problem now, but I plan to make changes that will make
+	 * it a problem, best to get ready now.
+	 */
+	BztDevice *self = BZT_DEVICE(initable);
+
+	self->properties = g_object_new(PROPERTIES_TYPE, "DBusType", "system", "DBusServiceName", BZT_DEVICE_DBUS_SERVICE, "DBusObjectPath", g_dbus_proxy_get_object_path(G_DBUS_PROXY(self)), NULL);
+	g_assert(self->properties != NULL);
 }
 
 static void _bzt_device_get_property(GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
@@ -103,10 +106,6 @@ static void _bzt_device_get_property(GObject *object, guint property_id, GValue 
 	BztDevice *self = BZT_DEVICE(object);
 
 	switch (property_id) {
-	case PROP_DBUS_OBJECT_PATH:
-		g_value_set_string(value, bzt_device_get_dbus_object_path(self));
-		break;
-
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
 		break;
@@ -116,94 +115,54 @@ static void _bzt_device_get_property(GObject *object, guint property_id, GValue 
 static void _bzt_device_set_property(GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
 {
 	BztDevice *self = BZT_DEVICE(object);
-	GError *error = NULL;
 
 	switch (property_id) {
-	case PROP_DBUS_OBJECT_PATH:
-		self->object_path = g_value_dup_string(value);
-		_bzt_device_create_gdbus_proxy(self, BZT_DEVICE_DBUS_SERVICE, self->object_path, &error);
-		break;
-
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
 		break;
 	}
-
-	if (error != NULL)
-		g_critical("%s", error->message);
-
-	g_assert(error == NULL);
-}
-
-/* Constructor */
-BztDevice *bzt_device_new(const gchar *dbus_object_path)
-{
-	return g_object_new(BZT_TYPE_DEVICE, "DBusObjectPath", dbus_object_path, NULL);
-}
-
-/* Private DBus proxy creation */
-static void _bzt_device_create_gdbus_proxy(BztDevice *self, const gchar *dbus_service_name, const gchar *dbus_object_path, GError **error)
-{
-	g_assert(BZT_IS_DEVICE(self));
-	self->proxy = g_dbus_proxy_new_sync(system_conn, G_DBUS_PROXY_FLAGS_NONE, NULL, dbus_service_name, dbus_object_path, BZT_DEVICE_DBUS_INTERFACE, NULL, error);
-
-	if(self->proxy == NULL)
-		return;
-
-	self->properties = g_object_new(PROPERTIES_TYPE, "DBusType", "system", "DBusServiceName", dbus_service_name, "DBusObjectPath", dbus_object_path, NULL);
-	g_assert(self->properties != NULL);
-}
-
-/* Methods */
-
-/* Get DBus object path */
-const gchar *bzt_device_get_dbus_object_path(BztDevice *self)
-{
-	g_assert(BZT_IS_DEVICE(self));
-	g_assert(self->proxy != NULL);
-	return g_dbus_proxy_get_object_path(self->proxy);
 }
 
 /* void CancelPairing() */
 void bzt_device_cancel_pairing(BztDevice *self, GError **error)
 {
 	g_assert(BZT_IS_DEVICE(self));
-	g_dbus_proxy_call_sync(self->proxy, "CancelPairing", NULL, G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
+	g_dbus_proxy_call_sync(G_DBUS_PROXY(self), "CancelPairing", NULL, G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
 }
 
 /* void Connect() */
 void bzt_device_connect(BztDevice *self, GError **error)
 {
 	g_assert(BZT_IS_DEVICE(self));
-	g_dbus_proxy_call_sync(self->proxy, "Connect", NULL, G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
+	g_dbus_proxy_call_sync(G_DBUS_PROXY(self), "Connect", NULL, G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
 }
 
 /* void ConnectProfile(string uuid) */
 void bzt_device_connect_profile(BztDevice *self, const gchar *uuid, GError **error)
 {
 	g_assert(BZT_IS_DEVICE(self));
-	g_dbus_proxy_call_sync(self->proxy, "ConnectProfile", g_variant_new ("(s)", uuid), G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
+	g_dbus_proxy_call_sync(G_DBUS_PROXY(self), "ConnectProfile", g_variant_new ("(s)", uuid), G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
 }
 
 /* void Disconnect() */
 void bzt_device_disconnect(BztDevice *self, GError **error)
 {
 	g_assert(BZT_IS_DEVICE(self));
-	g_dbus_proxy_call_sync(self->proxy, "Disconnect", NULL, G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
+	g_dbus_proxy_call_sync(G_DBUS_PROXY(self), "Disconnect", NULL, G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
 }
 
 /* void DisconnectProfile(string uuid) */
 void bzt_device_disconnect_profile(BztDevice *self, const gchar *uuid, GError **error)
 {
 	g_assert(BZT_IS_DEVICE(self));
-	g_dbus_proxy_call_sync(self->proxy, "DisconnectProfile", g_variant_new ("(s)", uuid), G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
+	g_dbus_proxy_call_sync(G_DBUS_PROXY(self), "DisconnectProfile", g_variant_new ("(s)", uuid), G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
 }
 
 /* void Pair() */
 void bzt_device_pair(BztDevice *self, GError **error)
 {
 	g_assert(BZT_IS_DEVICE(self));
-	g_dbus_proxy_call_sync(self->proxy, "Pair", NULL, G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
+	g_dbus_proxy_call_sync(G_DBUS_PROXY(self), "Pair", NULL, G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
 }
 
 /* Properties access methods */
